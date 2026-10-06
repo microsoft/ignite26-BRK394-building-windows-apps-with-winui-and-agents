@@ -73,6 +73,7 @@ public sealed partial class FleetTile : UserControl
         TailText.Text = aircraft.Tail;
         FlightText.Text = $"{aircraft.Flight} · {aircraft.Type}";
         NoteText.Text = string.IsNullOrEmpty(aircraft.StatusNote) ? $"{aircraft.Station} · {aircraft.NextDeparture}" : aircraft.StatusNote;
+        ToolTipService.SetToolTip(NoteText, NoteText.Text);
         AutomationProperties.SetName(this, $"{aircraft.Tail}, {aircraft.Flight}, {aircraft.Status}. {NoteText.Text}");
         VisualStateManager.GoToState(this, aircraft.Status.ToString(), useTransitions);
         SetBreathing(aircraft.Status == AircraftStatus.Attention);

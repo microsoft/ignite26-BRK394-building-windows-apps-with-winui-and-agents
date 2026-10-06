@@ -153,7 +153,7 @@
                                         x:Name="DipText"
                                         Foreground="{ThemeResource AttentionBrush}"
                                         Style="{StaticResource PillTextStyle}"
-                                        Text="Today 95.2% · CA 2207 held" />
+                                        Text="Today 97.6% · CA 2207 held" />
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -161,7 +161,7 @@
                     <charts:Chart
                         x:Name="AvailabilityChart"
                         Grid.Row="1"
-                        AutomationProperties.Name="Fleet availability over the last 30 days compared with the 98 percent target. Today dips to 95.2 percent." />
+                        AutomationProperties.Name="Fleet availability over the last 30 days compared with the 98 percent target. Today 97.6 percent, CA 2207 held." />
                 </Grid>
             </Border>
 

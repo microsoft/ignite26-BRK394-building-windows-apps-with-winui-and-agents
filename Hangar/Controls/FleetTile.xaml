@@ -14,12 +14,12 @@
             CornerRadius="{StaticResource CardCornerRadius}"
             Visibility="Collapsed" />
 
-        <!--  Faint silhouette, nose to the right.  -->
+        <!--  Faint silhouette, nose to the right. Sized to sit beside the status pill only, below the note line.  -->
         <Path
             x:Name="Silhouette"
-            Width="84"
-            Height="84"
-            Margin="0,0,-6,-10"
+            Width="52"
+            Height="52"
+            Margin="0,0,10,-6"
             HorizontalAlignment="Right"
             VerticalAlignment="Bottom"
             Data="M50,4 C54,4 56,10 56,18 L56,38 L94,58 L94,65 L56,54 L56,78 L68,88 L68,94 L50,89 L32,94 L32,88 L44,78 L44,54 L6,65 L6,58 L44,38 L44,18 C44,10 46,4 50,4 Z"
@@ -73,29 +73,34 @@
                 Foreground="{ThemeResource SecondaryTextBrush}"
                 Style="{StaticResource BodyTextStyle}" />
 
-            <StackPanel
+            <!--  Note sits on its own line above the silhouette watermark, so it never overlaps it.  -->
+            <TextBlock
+                x:Name="NoteText"
+                Grid.Row="2"
+                Grid.ColumnSpan="2"
+                Margin="0,0,0,10"
+                VerticalAlignment="Bottom"
+                FontSize="12"
+                Foreground="{ThemeResource SecondaryTextBrush}"
+                MaxLines="1"
+                Style="{StaticResource BodyTextStyle}"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="NoWrap" />
+
+            <Border
+                x:Name="Pill"
                 Grid.Row="3"
                 Grid.ColumnSpan="2"
-                Orientation="Horizontal"
-                Spacing="8">
-                <Border
-                    x:Name="Pill"
-                    Background="{ThemeResource HealthySoftBrush}"
-                    BorderBrush="{ThemeResource HealthyBrush}"
-                    Style="{StaticResource PillBorderStyle}">
-                    <TextBlock
-                        x:Name="StatusLabel"
-                        Foreground="{ThemeResource HealthyBrush}"
-                        Style="{StaticResource PillTextStyle}"
-                        Text="Serviceable" />
-                </Border>
+                HorizontalAlignment="Left"
+                Background="{ThemeResource HealthySoftBrush}"
+                BorderBrush="{ThemeResource HealthyBrush}"
+                Style="{StaticResource PillBorderStyle}">
                 <TextBlock
-                    x:Name="NoteText"
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TertiaryTextBrush}"
-                    Style="{StaticResource BodyTextStyle}"
-                    FontSize="12" />
-            </StackPanel>
+                    x:Name="StatusLabel"
+                    Foreground="{ThemeResource HealthyBrush}"
+                    Style="{StaticResource PillTextStyle}"
+                    Text="Serviceable" />
+            </Border>
         </Grid>
 
         <VisualStateManager.VisualStateGroups>

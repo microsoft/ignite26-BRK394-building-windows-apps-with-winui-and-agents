@@ -62,16 +62,11 @@ public sealed partial class FleetPage : Page
         OpenWoKpi.SetSpark(Data.OpenWoSpark, "AccentCyanBrush", "AccentAreaBrush");
         OnTimeKpi.SetSpark(Data.OnTimeSpark, "HealthyBrush", "HealthyAreaBrush");
 
-        var series = Data.Availability30.ToList();
-        if (healthy)
-        {
-            series[^1] = 97.6;
-        }
-
-        var today = series[^1];
+        var series = Data.Availability30;
+        var today = Data.TodayAvailability;
         var factory = ChartFactory.For(AvailabilityChart, this).Axes(series.Count, 94, 100, visible: true, ySpacing: 1);
         factory.Area(series, "AccentCyanBrush", "AccentAreaBrush", 2.5, "Availability");
-        factory.Reference(series.Count, 98, "ChartTargetBrush", title: "Target");
+        factory.Reference(series.Count, FleetDataService.AvailabilityTarget, "ChartTargetBrush", title: "Target");
         factory.Marker(series.Count - 1, today, healthy ? "HealthyBrush" : "AttentionBrush", title: "Today");
 
         var pillBrush = healthy ? "HealthyBrush" : "AttentionBrush";
@@ -84,6 +79,9 @@ public sealed partial class FleetPage : Page
         }
 
         DipText.Text = healthy ? $"Today {today:0.0}% · CA 2207 released" : $"Today {today:0.0}% · CA 2207 held";
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(AvailabilityChart,
+            $"Fleet availability over 30 days versus a {FleetDataService.AvailabilityTarget:0} percent target. Today {today:0.0} percent, CA 2207 {(healthy ? "released" : "held")}.");
+        AvailabilityKpi.Value = $"{today:0.0}%";
     }
 
     private void RefreshSummary()
@@ -106,14 +104,12 @@ public sealed partial class FleetPage : Page
             HeadlineText.Text = "All clear for first wave";
             SubheadText.Text = "CA 2207 signed off by Maya Okafor. Engine 2 within limits — departing 06:15 as scheduled.";
             SpotlightButton.Visibility = Visibility.Collapsed;
-            AvailabilityKpi.Value = "97.6%";
         }
         else
         {
             HeadlineText.Text = attention == 1 ? "1 aircraft needs you" : $"{attention} aircraft need you";
             SubheadText.Text = "CA 2207 landed with an Engine 2 vibration exceedance. Next departure 06:15, 180 passengers.";
             SpotlightButton.Visibility = Visibility.Visible;
-            AvailabilityKpi.Value = "95.2%";
         }
     }
 

@@ -68,9 +68,33 @@ public sealed class FleetDataService
 
     public const double VibrationThreshold = 1.8;
 
-    public IReadOnlyList<double> Availability30 { get; private set; } = [];
+    public const double AvailabilityTarget = 98.0;
 
-    public IReadOnlyList<double> AvailabilitySpark { get; private set; } = [];
+    /// <summary>
+    /// Single source of truth for today's fleet availability (%). Drives the KPI value, the sparkline
+    /// endpoint, the hero chart endpoint/marker and the "Today" badge. 97.6% while CA 2207 is held.
+    /// </summary>
+    public double TodayAvailability => Hero.Status == AircraftStatus.Healthy ? 98.1 : 97.6;
+
+    private double[] _availabilityHistory = [];
+    private double[] _availabilitySparkHistory = [];
+
+    /// <summary>30-day availability; the last point is always <see cref="TodayAvailability"/>.</summary>
+    public IReadOnlyList<double> Availability30 => WithToday(_availabilityHistory);
+
+    /// <summary>KPI sparkline; the last point is always <see cref="TodayAvailability"/>.</summary>
+    public IReadOnlyList<double> AvailabilitySpark => WithToday(_availabilitySparkHistory);
+
+    private double[] WithToday(double[] history)
+    {
+        var values = (double[])history.Clone();
+        if (values.Length > 0)
+        {
+            values[^1] = TodayAvailability;
+        }
+
+        return values;
+    }
 
     public IReadOnlyList<double> AogSpark { get; private set; } = [];
 
@@ -288,11 +312,10 @@ public sealed class FleetDataService
             availability[i] = Math.Round(98.1 + Math.Sin(i / 3.2) * 0.5 + rng.NextDouble() * 0.5, 2);
         }
 
-        availability[29] = 97.6;
         availability[28] = 98.3;
-        Availability30 = availability;
+        _availabilityHistory = availability;
 
-        AvailabilitySpark = Spark(rng, 98.0, 0.6, 97.6);
+        _availabilitySparkHistory = Spark(rng, AvailabilityTarget, 0.6, AvailabilityTarget);
         AogSpark = [2, 1, 1, 0, 0, 1, 2, 1, 0, 0, 1, 1, 0, 0, 1, 1];
         OpenWoSpark = Spark(rng, 135, 8, 128);
         OnTimeSpark = Spark(rng, 92, 2.5, 94);
