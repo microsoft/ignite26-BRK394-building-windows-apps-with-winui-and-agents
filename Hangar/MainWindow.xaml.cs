@@ -206,6 +206,7 @@ public sealed partial class MainWindow : Window
                 var page = parts.Length > 0 ? PageForTag(parts[0]) : null;
                 ElementTheme? theme = parts.Length > 1 && parts[1].Equals("light", StringComparison.OrdinalIgnoreCase) ? ElementTheme.Light : null;
                 InspectionsPage.DebugAutoSign = parts.Contains("sign", StringComparer.OrdinalIgnoreCase);
+                AircraftPage.DebugExplode = parts.Contains("explode", StringComparer.OrdinalIgnoreCase);
                 foreach (var token in parts.Skip(1))
                 {
                     if (Enum.TryParse<Models.EnginePart>(token, true, out var part) && part != Models.EnginePart.None)

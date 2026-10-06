@@ -13,6 +13,7 @@ The full product and design spec is in [`docs/CONCEPT.md`](docs/CONCEPT.md), whi
 | ![Work Orders](docs/screenshots/workorders.png) | ![Inspections](docs/screenshots/inspections.png) |
 
 Other screenshots in [`docs/screenshots`](docs/screenshots):
+- **Engine 2 exploded:** `aircraft-exploded.png`, `aircraft-exploded-light.png`
 - **Part zoom on the aircraft page:** `aircraft-fan.png`, `aircraft-turbine.png`
 - **After sign-off:** `inspections-signed.png`
 - **Day-shift (Light) versions of each page:** `*-light.png`
@@ -23,7 +24,7 @@ Other screenshots in [`docs/screenshots`](docs/screenshots):
 |---|---|
 | **Shell** | <ul><li>Mica Alt backdrop and an extended title bar with search (Ctrl+K) and a live departure-countdown chip</li><li>NavigationView in LeftCompact mode</li><li>Dark-first, with full Light and HighContrast dictionaries</li><li>`SystemAccentColor` is overridden to Runway Cyan `#3AD1F0`; Safety Amber `#FFB020` is reserved for attention states</li></ul> |
 | **Fleet** | <ul><li>4 KPI cards with sparklines</li><li>Hero 30-day availability **area Chart** with a dashed target line</li><li>ItemsRepeater grid of 42 aircraft, where CA 2207 breathes amber</li><li>Connected animation from a tile to the Aircraft page</li></ul> |
-| **Aircraft** | <ul><li>Canvas-style hero layout with a **Tron-style holographic wireframe A321neo** (Win2D)</li><li>Drag to orbit, wheel to zoom, idle auto-rotate</li><li>**Explode** separates Engine 2 into nacelle, fan, compressor and turbine using spring physics</li><li>Clicking a part (or its chip) flies the camera to it and shows a finding callout</li><li>Glass side panels hold vitals and an Engine 2 N1 vibration **line Chart** with a fleet-average band, a limit line and an amber spike, plus a flight scrubber</li></ul> |
+| **Aircraft** | <ul><li>Canvas-style hero layout with a **Tron-style holographic wireframe A321neo** (Win2D)</li><li>Drag to orbit, wheel to zoom, idle auto-rotate</li><li>**Tap Engine 2** (or press **Explode**) to fly the camera to a 3/4 technical-illustration view. Engine 2 then bursts into 50+ LEAP-1A parts: spinner, 22 fan blades, OGVs, booster, HPC stages, combustor, HPT/LPT stages, N1/N2 shafts, clamshell thrust reversers, exhaust and gearbox. The burst uses a staggered spring cascade with motion trails and an energy pulse; collapsing reverses the cascade</li><li>Once settled, the exploded view shows module-level callouts. Only fan blade 14 stays amber; the rest of the aircraft fades back. Tap empty space or press Esc to collapse</li><li>Chips (Nacelle, Fan, Compressor, Turbine) isolate a module, fly the camera to it and switch to per-part labels with a finding callout</li><li>Glass side panels hold vitals and an Engine 2 N1 vibration **line Chart** with a fleet-average band, a limit line and an amber spike, plus a flight scrubber</li></ul> |
 | **Work Orders** | <ul><li>First-party **TableView** with 2,400 seeded rows</li><li>Grouped by component, with templated group headers showing open count, a progress bar and hours</li><li>Filter chips, sortable headers, status pills, PersonPicture technicians and Cascadia Mono part numbers</li><li>Inline Hours editing with validation (> 0)</li><li>A **Show on aircraft** action</li></ul> |
 | **Inspections** | <ul><li>Full-bleed procedural borescope image with **InkCanvas + InkToolbar** (pen, highlighter, eraser, ruler)</li><li>Strokes can be saved and restored</li><li>Signing the ink signature pad and choosing **Sign & release** adds or updates WO 2207-014, flips CA 2207 to green across the app, and plays one celebratory composition moment</li></ul> |
 
@@ -79,8 +80,8 @@ Press **Ctrl+Shift+D** before you go on stage.
 | Time | Do | Say |
 |---|---|---|
 | 0:00 | Fleet: the amber CA 2207 tile is breathing | *"It's 2:40am. One of 42 aircraft just landed with a problem — and it leaves at 6:15."* |
-| 0:20 | Click the tile; it connects into the Aircraft page | *"This is WinUI. Native composition, GPU-drawn 3D, on a Surface."* |
-| 0:45 | Drag to orbit, then click **Explode**, then **Fan** | *"Let's look inside the engine."* |
+| 0:20 | Click the tile; it connects into the Aircraft page | *"This is WinUI. Native, GPU-drawn 3D on a Surface."* |
+| 0:45 | Drag to orbit, then **tap Engine 2** (it explodes), then **Fan** | *"Let's look inside the engine."* |
 | 1:05 | Vibration chart: scrub the flight slider | *"The new WinUI Chart control — line, area, markers, all first-party."* |
 | 1:25 | **Engine 2 work orders**: group by component, toggle the **N2207C** and **Last 12 months** chips, sort by date | *"And yes — WinUI has a TableView now. 2,400 rows, grouped, filtered, editable."* |
 | 1:55 | Inspections: circle the nick with the pen and measure with the ruler | *"Ink is back in WinUI 3. The pen is still the best tool in the hangar."* |

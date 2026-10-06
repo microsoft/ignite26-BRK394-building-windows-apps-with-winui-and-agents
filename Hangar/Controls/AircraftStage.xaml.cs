@@ -40,7 +40,24 @@ public sealed partial class AircraftStage : UserControl
     private static readonly EnginePart[] Parts = [EnginePart.Nacelle, EnginePart.Fan, EnginePart.Compressor, EnginePart.Turbine];
 
     private readonly List<WireLine> _lines = WireMesh.BuildA321();
-    private readonly Dictionary<EnginePart, Vector3> _centroids = [];
+    private const float EngineYaw = 1.12f, EnginePitch = 0.24f, EngineDistance = 16f;
+
+    // Exploded-view state: one damped spring per Engine 2 component, released in a cascade.
+    private readonly EngineSubPart[] _subs;
+    private readonly Vector3[] _subCenter;
+    private readonly float[] _subTop, _subBottom, _subX, _subV;
+    private readonly float _maxDelay;
+    private readonly int _hotSub = -1;
+    private readonly Vector3 _engineCenterCollapsed, _engineCenterExploded;
+    private double _explodeChangedAt = -100, _pulseStart = -100;
+    private float _labelAlpha;
+    private readonly List<LabelSlot> _labelSlots = [];
+    private readonly List<Rect> _labelRects = [];
+
+    private static bool Overlaps(Rect a, Rect b) =>
+        a.X < b.X + b.Width + 6 && b.X < a.X + a.Width + 6 && a.Y < b.Y + b.Height + 2 && b.Y < a.Y + a.Height + 2;
+    private bool _engineFocus;
+    private PointerDeviceType _pointerType = PointerDeviceType.Mouse;
     private readonly List<(Vector2 A, Vector2 B, EnginePart Part)> _hitSegments = [];
     private readonly Dictionary<EnginePart, Rect> _partBounds = [];
     private readonly Stopwatch _clock = Stopwatch.StartNew();
@@ -57,7 +74,7 @@ public sealed partial class AircraftStage : UserControl
 
     // Animation state.
     private double _lastFrame;
-    private float _explode, _explodeVelocity, _explodeGoal;
+    private float _explode, _explodeGoal;
     private float _spin, _spinRate = 0.45f;
     private float _heat = 0.6f;
     private float _selectionAge = 10f;
@@ -75,18 +92,64 @@ public sealed partial class AircraftStage : UserControl
     private Vector2? _hotTip;
 
     private CanvasRenderTarget? _target2D;
-    private CanvasTextFormat? _labelFormat, _subFormat;
+    private CanvasTextFormat? _labelFormat, _subFormat, _tagFormat;
 
     public AircraftStage()
     {
         InitializeComponent();
         IsTabStop = true;
         UseSystemFocusVisuals = true;
-        foreach (var part in Parts)
+        // Cache per-component centroids/extents once; frames only transform + project.
+        _subs = [.. WireMesh.SubParts];
+        var n = _subs.Length;
+        _subCenter = new Vector3[n];
+        _subTop = new float[n];
+        _subBottom = new float[n];
+        _subX = new float[n];
+        _subV = new float[n];
+        var counts = new int[n];
+        var minY = Enumerable.Repeat(float.MaxValue, n).ToArray();
+        var maxY = Enumerable.Repeat(float.MinValue, n).ToArray();
+        foreach (var line in _lines.Where(l => l.Sub >= 0))
         {
-            var pts = _lines.Where(l => l.IsEngine2 && l.Part == part).SelectMany(l => l.Points).ToList();
-            _centroids[part] = pts.Aggregate(Vector3.Zero, (a, p) => a + p) / pts.Count;
+            if (line.IsHot)
+            {
+                _hotSub = line.Sub;
+            }
+
+            foreach (var p in line.Points)
+            {
+                _subCenter[line.Sub] += p;
+                counts[line.Sub]++;
+                minY[line.Sub] = Math.Min(minY[line.Sub], p.Y);
+                maxY[line.Sub] = Math.Max(maxY[line.Sub], p.Y);
+            }
         }
+
+        for (var i = 0; i < n; i++)
+        {
+            _subCenter[i] /= Math.Max(1, counts[i]);
+            _subTop[i] = maxY[i] - _subCenter[i].Y;
+            _subBottom[i] = _subCenter[i].Y - minY[i];
+        }
+
+        _maxDelay = n == 0 ? 0f : _subs.Max(s => s.Delay);
+        Vector3 min0 = new(float.MaxValue), max0 = new(float.MinValue), min1 = min0, max1 = max0;
+        foreach (var line in _lines.Where(l => l.Sub >= 0))
+        {
+            foreach (var p in line.Points)
+            {
+                var q = SubPoint(line.Sub, p, 1f, false);
+                min0 = Vector3.Min(min0, p);
+                max0 = Vector3.Max(max0, p);
+                min1 = Vector3.Min(min1, q);
+                max1 = Vector3.Max(max1, q);
+            }
+        }
+
+        _engineCenterCollapsed = n == 0 ? WireMesh.Engine2Origin : (min0 + max0) / 2f;
+        // Biased toward the near (fan) end so the perspective-enlarged inlet doesn't run under the side panel.
+        _engineCenterExploded = n == 0 ? WireMesh.Engine2Origin : (min1 + max1) / 2f + new Vector3(1.1f, 0f, 0f);
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -110,8 +173,37 @@ public sealed partial class AircraftStage : UserControl
 
         IsExploded = exploded;
         _explodeGoal = exploded ? 1f : 0f;
+        var now = _clock.Elapsed.TotalSeconds;
+        // Reversing mid-flight: shift the clock so already-released parts keep moving.
+        var elapsed = Math.Clamp(now - _explodeChangedAt, 0, _maxDelay);
+        _explodeChangedAt = now - (_maxDelay - elapsed);
+        if (exploded)
+        {
+            _pulseStart = now;
+        }
+
         ExplodedChanged?.Invoke(this, exploded);
+        UpdateAutomationName();
     }
+
+    /// <summary>Fly the camera to Engine 2 and burst it into its exploded view.</summary>
+    public void ExplodeEngine()
+    {
+        _engineFocus = true;
+        if (SelectedPart != EnginePart.None)
+        {
+            Select(EnginePart.None);
+        }
+
+        _goalYaw = NearestAngle(EngineYaw);
+        _goalPitch = EnginePitch;
+        _goalDistance = EngineDistance;
+        _lastInteraction = _clock.Elapsed.TotalSeconds;
+        SetExploded(true);
+    }
+
+    /// <summary>Reverse the cascade and return the camera to the default orbit.</summary>
+    public void CollapseEngine() => ResetView();
 
     public void Select(EnginePart part)
     {
@@ -124,10 +216,11 @@ public sealed partial class AircraftStage : UserControl
         _selectionAge = 0f;
         var (yaw, pitch, distance) = part switch
         {
-            EnginePart.Nacelle => (0.95f, 0.24f, 17f),
-            EnginePart.Fan => (1.22f, 0.12f, 13.5f),
-            EnginePart.Compressor => (0.42f, 0.34f, 12.5f),
-            EnginePart.Turbine => (-0.30f, 0.26f, 12.5f),
+            EnginePart.Nacelle => (1.05f, 0.26f, 18f),
+            EnginePart.Fan => (1.22f, 0.15f, 13.5f),
+            EnginePart.Compressor => (1.0f, 0.3f, 13f),
+            EnginePart.Turbine => (1.85f, 0.26f, 13f),
+            _ when _engineFocus => (EngineYaw, EnginePitch, EngineDistance),
             _ => (DefaultYaw, DefaultPitch, DefaultDistance),
         };
         _goalYaw = NearestAngle(yaw);
@@ -152,6 +245,7 @@ public sealed partial class AircraftStage : UserControl
 
     public void ResetView()
     {
+        _engineFocus = false;
         Select(EnginePart.None);
         _goalYaw = NearestAngle(DefaultYaw);
         _goalPitch = DefaultPitch;
@@ -219,44 +313,92 @@ public sealed partial class AircraftStage : UserControl
             (byte)(a.G + (b.G - a.G) * t), (byte)(a.B + (b.B - a.B) * t));
     }
 
-    private Vector3 ExplodeOffset(EnginePart part) => _explode * part switch
+    private static Vector3 Roll(Vector3 p, Vector3 o, float angle)
     {
-        EnginePart.Nacelle => new Vector3(0f, 3.2f, 0f),
-        EnginePart.Fan => new Vector3(3.5f, 0f, 0f),
-        EnginePart.Compressor => new Vector3(-0.8f, 0.6f, 0f),
-        EnginePart.Turbine => new Vector3(-3.8f, 0f, 0f),
-        _ => Vector3.Zero,
-    };
+        float dy = p.Y - o.Y, dz = p.Z - o.Z, c = MathF.Cos(angle), s = MathF.Sin(angle);
+        return new Vector3(p.X, o.Y + dy * c - dz * s, o.Z + dy * s + dz * c);
+    }
 
-    private Vector3 PartCenter(EnginePart part) => _centroids[part] + ExplodeOffset(part);
-
-    private Vector3 Transform(WireLine line, Vector3 p)
+    /// <summary>Position of a point on component <paramref name="sub"/> at explode amount <paramref name="x"/>.</summary>
+    private Vector3 SubPoint(int sub, Vector3 p, float x, bool spins)
     {
-        if (line.Spins)
+        var s = _subs[sub];
+        var o = WireMesh.Engine2Origin;
+        if (s.Roll != 0f)
         {
-            var o = p.Z < 0 ? Engine1Origin : WireMesh.Engine2Origin;
-            float dy = p.Y - o.Y, dz = p.Z - o.Z, c = MathF.Cos(_spin), s = MathF.Sin(_spin);
-            p = new Vector3(p.X, o.Y + dy * c - dz * s, o.Z + dy * s + dz * c);
+            p = Roll(p, o, s.Roll * x);
         }
 
-        return line.IsEngine2 ? p + ExplodeOffset(line.Part) : p;
+        p += s.RadialDir * (s.Radial * x);
+        if (spins)
+        {
+            p = Roll(p, o, _spin);
+        }
+
+        return p + s.Axial * x;
+    }
+
+    private Vector3 PartCenter(EnginePart part)
+    {
+        var sum = Vector3.Zero;
+        var count = 0;
+        for (var i = 0; i < _subs.Length; i++)
+        {
+            if (_subs[i].Group == part)
+            {
+                sum += SubPoint(i, _subCenter[i], _subX[i], false);
+                count++;
+            }
+        }
+
+        return count == 0 ? WireMesh.Engine2Origin : sum / count;
+    }
+
+    private Vector3 EngineCenter => Vector3.Lerp(_engineCenterCollapsed, _engineCenterExploded, Math.Clamp(_explode, 0f, 1f));
+
+    private Vector3 Transform(WireLine line, Vector3 p, float lag = 0f)
+    {
+        if (line.Sub >= 0)
+        {
+            return SubPoint(line.Sub, p, _subX[line.Sub] - _subV[line.Sub] * lag, line.Spins);
+        }
+
+        return line.Spins ? Roll(p, p.Z < 0 ? Engine1Origin : WireMesh.Engine2Origin, _spin) : p;
     }
 
     private void Step(double now, float dt)
     {
-        if (_animationsEnabled)
+        var since = now - _explodeChangedAt;
+        var exploding = _explodeGoal > 0.5f;
+        float sum = 0f, maxSpeed = 0f;
+        for (var i = 0; i < _subs.Length; i++)
         {
-            var accel = 90f * (_explodeGoal - _explode) - 14f * _explodeVelocity;
-            _explodeVelocity += accel * dt;
-            _explode += _explodeVelocity * dt;
-        }
-        else
-        {
-            _explode = _explodeGoal;
-            _explodeVelocity = 0f;
+            // Explode front-to-back; collapse reverses the cascade.
+            var delay = exploding ? _subs[i].Delay : _maxDelay - _subs[i].Delay;
+            var goal = since >= delay ? _explodeGoal : 1f - _explodeGoal;
+            if (_animationsEnabled)
+            {
+                var accel = 150f * (goal - _subX[i]) - (exploding ? 10.5f : 17f) * _subV[i];
+                _subV[i] += accel * dt;
+                _subX[i] += _subV[i] * dt;
+            }
+            else
+            {
+                _subX[i] = _explodeGoal;
+                _subV[i] = 0f;
+            }
+
+            sum += _subX[i];
+            maxSpeed = Math.Max(maxSpeed, Math.Abs(_subV[i]));
         }
 
-        var idle = _animationsEnabled && SelectedPart == EnginePart.None && !_pressed && now - _lastInteraction > 4;
+        _explode = _subs.Length == 0 ? _explodeGoal : sum / _subs.Length;
+        var settled = exploding && since > _maxDelay + 0.2 && maxSpeed < 0.15f;
+        _labelAlpha = _animationsEnabled
+            ? Math.Clamp(_labelAlpha + (settled ? dt * 2.2f : -dt * 6f), 0f, 1f)
+            : settled ? 1f : 0f;
+
+        var idle = _animationsEnabled && SelectedPart == EnginePart.None && !_engineFocus && !_pressed && now - _lastInteraction > 4;
         _idleAmount += ((idle ? 1f : 0f) - _idleAmount) * Math.Min(1f, dt * 0.8f);
         _goalYaw += 0.06f * _idleAmount * dt;
 
@@ -264,12 +406,14 @@ public sealed partial class AircraftStage : UserControl
         _yaw += (_goalYaw - _yaw) * k;
         _pitch += (_goalPitch - _pitch) * k;
         _distance += (_goalDistance - _distance) * k;
-        var goalTarget = SelectedPart == EnginePart.None ? DefaultTarget : PartCenter(SelectedPart);
+        var goalTarget = SelectedPart != EnginePart.None ? PartCenter(SelectedPart) : _engineFocus ? EngineCenter : DefaultTarget;
         _target = Vector3.Lerp(_target, goalTarget, k);
 
         if (_animationsEnabled)
         {
-            _spin = (_spin + _spinRate * dt * MathF.Tau) % MathF.Tau;
+            // The fan winds down while exploded so labels stay readable.
+            var rate = _spinRate * (1f - 0.92f * Math.Clamp(_explode, 0f, 1f));
+            _spin = (_spin + rate * dt * MathF.Tau) % MathF.Tau;
         }
 
         _selectionAge += dt;
@@ -317,6 +461,7 @@ public sealed partial class AircraftStage : UserControl
 
         _labelFormat ??= new CanvasTextFormat { FontFamily = "Segoe UI Variable Display", FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
         _subFormat ??= new CanvasTextFormat { FontFamily = "Cascadia Mono", FontSize = 12 };
+        _tagFormat ??= new CanvasTextFormat { FontFamily = "Cascadia Mono", FontSize = 10.5f };
 
         var ds = args.DrawingSession;
         var glow = !_light && !_highContrast;
@@ -328,6 +473,12 @@ public sealed partial class AircraftStage : UserControl
         var sweepX = 26f - (float)(now % 5.5 / 5.5) * 54f;
         var focusPart = _hover != EnginePart.None ? _hover : SelectedPart;
         var baseAlpha = _highContrast ? 1f : _light ? 0.72f : 0.58f;
+        // While exploded, the rest of the aircraft recedes (~15%) and is pushed away from the camera.
+        var ex = Math.Clamp(_explode, 0f, 1f);
+        var airframeFade = _highContrast ? 1f - 0.6f * ex : 1f - 0.85f * ex;
+        var pushBack = Vector3.Normalize(_target - eye) * (7f * ex);
+        _floorFade = 1f - 0.55f * ex;
+        _safe = new Rect(left + 8f, Math.Max(24f, top * 0.5f), Math.Max(80f, w - right - left - 16f), Math.Max(80f, h - bottom - 12f - Math.Max(24f, top * 0.5f)));
 
         if (glow)
         {
@@ -355,18 +506,23 @@ public sealed partial class AircraftStage : UserControl
                 float alpha = baseAlpha, width = _highContrast ? 1.5f : 1.1f;
                 if (line.IsEngine2)
                 {
-                    color = healthy ? _green : Mix(_amber, _cyan, 0.15f * (1f - blink));
-                    alpha = healthy ? 0.85f : 0.55f + 0.45f * blink;
+                    // Collapsed, Engine 2 breathes amber (attention). Exploded, it becomes a cyan technical
+                    // drawing with depth/group shading, and amber is reserved for the faulty fan blade 14.
+                    var attention = healthy ? _green : Mix(_amber, _cyan, 0.15f * (1f - blink));
+                    var attentionAlpha = healthy ? 0.85f : 0.55f + 0.45f * blink;
+                    var (tint, groupAlpha) = GroupStyle(line.Part);
+                    color = Mix(attention, tint, ex);
+                    alpha = attentionAlpha + (groupAlpha - attentionAlpha) * ex;
                     if (line.Part == EnginePart.Turbine && !healthy)
                     {
-                        color = Mix(color, _heatColor, 0.55f * _heat);
+                        color = Mix(color, _heatColor, 0.55f * _heat * (1f - ex));
                     }
 
-                    if (line.IsHot && !healthy)
+                    if (line.Sub >= 0 && line.Sub == _hotSub && !healthy)
                     {
-                        color = Mix(_amber, _light ? _heatColor : Colors.White, 0.55f * hotBlink);
-                        alpha = 0.55f + 0.45f * hotBlink;
-                        width = 2.6f;
+                        color = line.IsHot ? Mix(_amber, _light ? _heatColor : Colors.White, 0.55f * hotBlink) : _amber;
+                        alpha = line.IsHot ? 0.55f + 0.45f * hotBlink : 0.7f + 0.3f * hotBlink;
+                        width = line.IsHot ? 2.6f : 1.4f + 0.4f * ex;
                     }
 
                     if (focusPart != EnginePart.None)
@@ -379,6 +535,7 @@ public sealed partial class AircraftStage : UserControl
                 {
                     color = _cyan;
                     alpha *= SelectedPart != EnginePart.None ? 0.3f : 1f;
+                    alpha *= airframeFade;
                 }
 
                 if (celebrating)
@@ -394,6 +551,11 @@ public sealed partial class AircraftStage : UserControl
                 for (var i = 0; i < pts.Length; i++)
                 {
                     var world = Transform(line, pts[i]);
+                    if (!line.IsEngine2)
+                    {
+                        world += pushBack;
+                    }
+
                     var ok = Project(world, out var sp, out var depth);
                     if (ok && prevOk)
                     {
@@ -405,7 +567,7 @@ public sealed partial class AircraftStage : UserControl
                         {
                             var s = 1f - scan / 1.6f;
                             segColor = Mix(segColor, Colors.White, 0.45f * s);
-                            segAlpha = Math.Min(1f, segAlpha + 0.4f * s);
+                            segAlpha = Math.Min(1f, segAlpha + 0.4f * s * (line.IsEngine2 ? 1f : airframeFade));
                         }
 
                         lds.DrawLine(prev, sp, WithAlpha(segColor, segAlpha), width);
@@ -426,10 +588,29 @@ public sealed partial class AircraftStage : UserControl
                 }
             }
 
-            DrawEffects(lds, Project, now, healthy, celebrateT);
-            if (focusPart != EnginePart.None && Project(PartCenter(focusPart), out var anchor, out _))
+            if (glow && _animationsEnabled)
             {
-                DrawCallout(lds, focusPart, anchor, now, healthy);
+                DrawTrails(lds, Project);
+            }
+
+            DrawEffects(lds, Project, now, healthy, celebrateT);
+            _labelRects.Clear();
+            var labelsOwnStage = _labelAlpha > 0.5f && SelectedPart == EnginePart.None && _hover == EnginePart.None;
+            Vector2? calloutAnchor = null;
+            if (!labelsOwnStage && focusPart != EnginePart.None && Project(PartCenter(focusPart), out var anchor, out _))
+            {
+                calloutAnchor = anchor;
+                _labelRects.Add(CalloutRect(anchor));
+            }
+
+            if (_labelAlpha > 0.01f)
+            {
+                DrawPartLabels(lds, Project, healthy);
+            }
+
+            if (calloutAnchor is Vector2 ca)
+            {
+                DrawCallout(lds, focusPart, ca, now, healthy);
             }
         }
 
@@ -470,10 +651,30 @@ public sealed partial class AircraftStage : UserControl
     private delegate bool Projector(Vector3 p, out Vector2 screen, out float depth);
 
     private Size _viewSize;
+    private Rect _safe;
+    private float _floorFade = 1f;
+
+    private (Color Tint, float Alpha) GroupStyle(EnginePart part)
+    {
+        if (_highContrast)
+        {
+            return (_cyan, 1f);
+        }
+
+        var bright = _light ? _cyan : Mix(_cyan, Colors.White, 0.3f);
+        var deep = _light ? _cyan : Mix(_cyan, _canvas, 0.3f);
+        return part switch
+        {
+            EnginePart.Fan => (bright, 0.95f),
+            EnginePart.Compressor => (_cyan, 0.85f),
+            EnginePart.Turbine => (Mix(_cyan, deep, 0.5f), 0.8f),
+            _ => (deep, 0.66f),
+        };
+    }
 
     private void DrawFloor(CanvasDrawingSession ds, Projector project)
     {
-        var floorAlpha = _highContrast ? 0.6f : _light ? 0.22f : 0.16f;
+        var floorAlpha = (_highContrast ? 0.6f : _light ? 0.22f : 0.16f) * _floorFade;
         for (var r = 6f; r <= 36f; r += 6f)
         {
             Vector2 prev = default;
@@ -505,10 +706,11 @@ public sealed partial class AircraftStage : UserControl
 
     private void DrawEffects(CanvasDrawingSession ds, Projector project, double now, bool healthy, float celebrateT)
     {
-        if (!healthy && _heat > 0.01f && project(PartCenter(EnginePart.Turbine), out var turbine, out var depth))
+        var heatAmount = _heat * (1f - Math.Clamp(_explode, 0f, 1f));
+        if (!healthy && heatAmount > 0.01f && project(PartCenter(EnginePart.Turbine), out var turbine, out var depth))
         {
-            var radius = 260f / depth * (0.7f + 0.3f * _heat);
-            using var heat = new CanvasRadialGradientBrush(ds, WithAlpha(_heatColor, 0.35f * _heat), WithAlpha(_heatColor, 0f))
+            var radius = 260f / depth * (0.7f + 0.3f * heatAmount);
+            using var heat = new CanvasRadialGradientBrush(ds, WithAlpha(_heatColor, 0.35f * heatAmount), WithAlpha(_heatColor, 0f))
             {
                 Center = turbine,
                 RadiusX = radius,
@@ -540,6 +742,221 @@ public sealed partial class AircraftStage : UserControl
                 }
             }
         }
+
+        var pt = (float)(now - _pulseStart);
+        if (pt is >= 0f and < 0.9f && IsExploded && _animationsEnabled && project(EngineCenter, out var core, out var coreDepth))
+        {
+            var pulseColor = healthy ? _green : _cyan;
+            var glowRadius = 900f / coreDepth * (0.4f + EaseOut(Math.Clamp(pt / 0.5f, 0f, 1f)));
+            using (var glow = new CanvasRadialGradientBrush(ds, WithAlpha(pulseColor, 0.4f * (1f - pt / 0.9f)), WithAlpha(pulseColor, 0f))
+            {
+                Center = core,
+                RadiusX = glowRadius,
+                RadiusY = glowRadius * 0.7f,
+            })
+            {
+                ds.FillEllipse(core, glowRadius, glowRadius * 0.7f, glow);
+            }
+
+            for (var k = 0; k < 3; k++)
+            {
+                var t = Math.Clamp((pt - k * 0.12f) / 0.6f, 0f, 1f);
+                if (t is > 0f and < 1f)
+                {
+                    var r = 30f + 1400f / coreDepth * EaseOut(t);
+                    ds.DrawEllipse(core, r, r * 0.62f, WithAlpha(pulseColor, (1f - t) * 0.9f), 2.5f * (1f - t) + 0.6f);
+                }
+            }
+        }
+    }
+
+    private void DrawTrails(CanvasDrawingSession ds, Projector project)
+    {
+        foreach (var line in _lines)
+        {
+            if (line.Sub < 0 || Math.Abs(_subV[line.Sub]) < 0.6f || line.Points.Length < 2)
+            {
+                continue;
+            }
+
+            for (var lagIndex = 1; lagIndex <= 2; lagIndex++)
+            {
+                var lag = 0.045f * lagIndex;
+                var color = WithAlpha(_cyan, lagIndex == 1 ? 0.16f : 0.08f);
+                Vector2? prev = null;
+                foreach (var p in line.Points)
+                {
+                    if (!project(Transform(line, p, lag), out var s, out _))
+                    {
+                        prev = null;
+                        continue;
+                    }
+
+                    if (prev is Vector2 a)
+                    {
+                        ds.DrawLine(a, s, color, 1f);
+                    }
+
+                    prev = s;
+                }
+            }
+        }
+    }
+
+    private readonly record struct LabelSlot(int Sub, string Title, string? Detail, bool Hot, Vector2 Top, Vector2 Bottom);
+
+    private (int Sub, string Title, string Detail)[]? _groupLabels;
+
+    private (int Sub, string Title, string Detail)[] GroupLabels => _groupLabels ??=
+    [
+        (FindSub("Thrust reverser (near)"), "NACELLE", "COWL · FAN CASE · REVERSERS"),
+        (FindSub("Fan disk"), "FAN MODULE", "DISK · 22 BLADES · OGV ×30"),
+        (FindSub("HPC stage 4"), "COMPRESSOR", "BOOSTER ×3 · HPC ×8 · COMBUSTOR"),
+        (FindSub("LPT stage 3"), "TURBINE", "HPT ×2 · LPT ×5 · N1/N2 SHAFTS"),
+    ];
+
+    private int FindSub(string name) => Array.FindIndex(_subs, s => s.Name == name);
+
+    /// <summary>
+    /// Technical-illustration callouts. By default one label per module (plus the flagged blade); with a module
+    /// selected, one per component in it. Labels alternate above/below the axis, step their leaders until they
+    /// clear every placed tag (and the selection callout), and stay inside the safe area between the panels.
+    /// </summary>
+    private void DrawPartLabels(CanvasDrawingSession ds, Projector project, bool healthy)
+    {
+        _labelSlots.Clear();
+        void AddSlot(int i, string title, string? detail)
+        {
+            if (i < 0)
+            {
+                return;
+            }
+
+            var top = _subCenter[i] + new Vector3(0f, _subTop[i], 0f);
+            var bottom = _subCenter[i] - new Vector3(0f, _subBottom[i], 0f);
+            if (project(SubPoint(i, top, _subX[i], false), out var t, out _) && project(SubPoint(i, bottom, _subX[i], false), out var b, out _))
+            {
+                _labelSlots.Add(new LabelSlot(i, title, detail, i == _hotSub, t, b));
+            }
+        }
+
+        if (SelectedPart == EnginePart.None)
+        {
+            AddSlot(_hotSub, "FAN BLADE 14", healthy ? "SIGNED OFF · OK" : "LE NICK · 0.42 mm");
+            foreach (var (sub, title, detail) in GroupLabels)
+            {
+                AddSlot(sub, title, detail);
+            }
+        }
+        else
+        {
+            for (var i = 0; i < _subs.Length; i++)
+            {
+                if (_subs[i].Group == SelectedPart && !string.IsNullOrEmpty(_subs[i].Label) && i != _hotSub)
+                {
+                    AddSlot(i, _subs[i].Label!, null);
+                }
+            }
+        }
+
+        var a = _labelAlpha * Math.Clamp(_selectionAge * 3f, 0f, 1f);
+        if (a < 0.01f)
+        {
+            return;
+        }
+
+        var ordered = _labelSlots.OrderByDescending(s => s.Hot).ThenBy(s => (s.Top.X + s.Bottom.X) / 2f).ToList();
+        var alternate = 0;
+        foreach (var slot in ordered)
+        {
+            var preferUp = slot.Hot || alternate++ % 2 == 0;
+            if (!TryPlaceLabel(slot, preferUp, out var rect, out var up))
+            {
+                continue;
+            }
+
+            _labelRects.Add(rect);
+            var hot = slot.Hot && !healthy;
+            var accent = healthy ? _green : hot ? _amber : _cyan;
+            var textColor = _light ? _text : slot.Detail is null ? accent : Mix(accent, Colors.White, 0.35f);
+            var anchor = up ? slot.Top : slot.Bottom;
+            var endY = up ? (float)(rect.Y + rect.Height) + 3f : (float)rect.Y - 3f;
+            var cx = (float)(rect.X + rect.Width / 2);
+            var elbow = new Vector2(anchor.X, anchor.Y + (endY - anchor.Y) * a);
+            ds.FillCircle(anchor, 2.4f, WithAlpha(accent, 0.95f * a));
+            ds.DrawLine(anchor, elbow, WithAlpha(accent, 0.6f * a), 1f);
+            ds.DrawLine(Math.Min(anchor.X, cx - 6f), endY, Math.Max(anchor.X, cx + 6f), endY, WithAlpha(accent, 0.85f * a), 1f);
+
+            if (!_highContrast)
+            {
+                ds.FillRoundedRectangle(rect, 3f, 3f, WithAlpha(_canvas, 0.78f * a));
+            }
+
+            if (hot)
+            {
+                ds.DrawRoundedRectangle(rect, 3f, 3f, WithAlpha(_amber, 0.75f * a), 1f);
+            }
+
+            var titleFormat = slot.Detail is null ? _tagFormat! : _subFormat!;
+            titleFormat.HorizontalAlignment = CanvasHorizontalAlignment.Center;
+            ds.DrawText(slot.Title, (float)rect.X, (float)rect.Y + 1f, (float)rect.Width, 17f, WithAlpha(textColor, 0.95f * a), titleFormat);
+            titleFormat.HorizontalAlignment = CanvasHorizontalAlignment.Left;
+            if (slot.Detail is not null)
+            {
+                _tagFormat!.HorizontalAlignment = CanvasHorizontalAlignment.Center;
+                ds.DrawText(slot.Detail, (float)rect.X, (float)rect.Y + 18f, (float)rect.Width, 15f, WithAlpha(_light ? _text : accent, 0.8f * a), _tagFormat);
+                _tagFormat.HorizontalAlignment = CanvasHorizontalAlignment.Left;
+            }
+        }
+    }
+
+    private bool TryPlaceLabel(LabelSlot slot, bool preferUp, out Rect rect, out bool up)
+    {
+        var width = Math.Max(slot.Title.Length * (slot.Detail is null ? 6.6f : 7.4f), (slot.Detail?.Length ?? 0) * 6.6f) + 16f;
+        var height = slot.Detail is null ? 18f : 34f;
+        Rect? fallback = null;
+        var fallbackUp = preferUp;
+        for (var pass = 0; pass < 2; pass++)
+        {
+            up = pass == 0 ? preferUp : !preferUp;
+            var anchor = up ? slot.Top : slot.Bottom;
+            for (var step = 0; step < 10; step++)
+            {
+                var length = (slot.Hot ? 130f : 34f) + 20f * step;
+                var y = up ? anchor.Y - length - height : anchor.Y + length;
+                var x = Math.Clamp(anchor.X - width / 2f, (float)_safe.X, (float)(_safe.X + _safe.Width) - width);
+                rect = new Rect(x, y, width, height);
+                if (y < _safe.Y || y + height > _safe.Y + _safe.Height)
+                {
+                    break;
+                }
+
+                if (fallback is null)
+                {
+                    fallback = rect;
+                    fallbackUp = up;
+                }
+
+                var candidate = rect;
+                if (!_labelRects.Any(r => Overlaps(r, candidate)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        // Only the flagged blade is guaranteed a tag; everything else is dropped rather than overlapped.
+        up = fallbackUp;
+        rect = fallback ?? default;
+        return slot.Hot && fallback is not null;
+    }
+
+    private Rect CalloutRect(Vector2 anchor)
+    {
+        var dir = anchor.X + 300 > _safe.X + _safe.Width ? -1f : 1f;
+        var elbow = anchor + new Vector2(70f * dir, -80f);
+        var end = elbow + new Vector2(200f * dir, 0f);
+        return new Rect(Math.Min(anchor.X, end.X), elbow.Y - 30f, Math.Abs(end.X - anchor.X), 110f);
     }
 
     private static float EaseOut(float t) => 1f - MathF.Pow(1f - t, 3f);
@@ -551,18 +968,18 @@ public sealed partial class AircraftStage : UserControl
         {
             EnginePart.Fan => ("FAN · BLADE 14", flagged ? "LEADING-EDGE NICK · 0.42 mm" : "BLADE 14 · SIGNED OFF"),
             EnginePart.Nacelle => ("NACELLE", flagged ? "INLET COWL · NOMINAL" : "INLET COWL · NOMINAL"),
-            EnginePart.Compressor => ("HP COMPRESSOR", flagged ? "N2 VIB 1.9 ips · WATCH" : "N2 VIB 0.8 ips · OK"),
-            EnginePart.Turbine => ("HP TURBINE", flagged ? "EGT MARGIN 18 °C · LOW" : "EGT MARGIN 41 °C · OK"),
+            EnginePart.Compressor => ("HP COMPRESSOR", "N2 VIB 0.8 ips · IN BAND"),
+            EnginePart.Turbine => ("HP TURBINE", "EGT MARGIN 42 °C · OK"),
             _ => (string.Empty, string.Empty),
         };
-        var accent = flagged && part != EnginePart.Nacelle ? _amber : healthy ? _green : _cyan;
+        var accent = flagged && part == EnginePart.Fan ? _amber : healthy ? _green : _cyan;
         var appear = Math.Clamp(_selectionAge * 3f, 0f, 1f);
         if (_hover != EnginePart.None && _hover != SelectedPart)
         {
             appear = 1f;
         }
 
-        var flip = anchor.X + 300 > _viewSize.Width;
+        var flip = anchor.X + 300 > _safe.X + _safe.Width;
         var dir = flip ? -1f : 1f;
         var elbow = anchor + new Vector2(70f * dir, -80f);
         var end = elbow + new Vector2(200f * dir * appear, 0f);
@@ -589,11 +1006,27 @@ public sealed partial class AircraftStage : UserControl
         }
     }
 
-    private EnginePart HitTest(Point point)
+    private bool IsEngineHit(Point point, float slop)
+    {
+        foreach (var (_, r) in _partBounds)
+        {
+            var inflated = new Rect(r.X - 24, r.Y - 24, r.Width + 48, r.Height + 48);
+            if (inflated.Contains(point))
+            {
+                return true;
+            }
+        }
+
+        return HitTest(point, slop) != EnginePart.None;
+    }
+
+    private float PointerSlop => _pointerType is PointerDeviceType.Touch or PointerDeviceType.Pen ? 26f : 14f;
+
+    private EnginePart HitTest(Point point, float threshold = 14f)
     {
         var p = new Vector2((float)point.X, (float)point.Y);
         var best = EnginePart.None;
-        var bestDistance = 10f;
+        var bestDistance = threshold;
         foreach (var (a, b, part) in _hitSegments)
         {
             var ab = b - a;
@@ -628,18 +1061,20 @@ public sealed partial class AircraftStage : UserControl
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        Canvas.CapturePointer(e.Pointer);
+        Root.CapturePointer(e.Pointer);
         _pressed = true;
         _dragging = false;
-        _pressPoint = _lastPoint = e.GetCurrentPoint(Canvas).Position;
+        _pressPoint = _lastPoint = e.GetCurrentPoint(Root).Position;
+        _pointerType = e.Pointer.PointerDeviceType;
         _lastInteraction = _clock.Elapsed.TotalSeconds;
         Focus(FocusState.Pointer);
         e.Handled = true;
     }
 
+
     private void OnPointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        var pos = e.GetCurrentPoint(Canvas).Position;
+        var pos = e.GetCurrentPoint(Root).Position;
         if (_pressed)
         {
             if (!_dragging && Math.Abs(pos.X - _pressPoint.X) + Math.Abs(pos.Y - _pressPoint.Y) > 5)
@@ -656,8 +1091,9 @@ public sealed partial class AircraftStage : UserControl
         }
         else
         {
-            _hover = HitTest(pos);
-            ProtectedCursor = InputSystemCursor.Create(_hover != EnginePart.None ? InputSystemCursorShape.Hand : InputSystemCursorShape.SizeAll);
+            _hover = IsExploded ? HitTest(pos) : EnginePart.None;
+            var clickable = _hover != EnginePart.None || (!IsExploded && IsEngineHit(pos, 14f));
+            ProtectedCursor = InputSystemCursor.Create(clickable ? InputSystemCursorShape.Hand : InputSystemCursorShape.SizeAll);
         }
 
         _lastPoint = pos;
@@ -668,21 +1104,32 @@ public sealed partial class AircraftStage : UserControl
         var wasClick = _pressed && !_dragging;
         _pressed = false;
         _dragging = false;
-        Canvas.ReleasePointerCapture(e.Pointer);
+        Root.ReleasePointerCapture(e.Pointer);
         if (!wasClick)
         {
             return;
         }
 
-        var part = HitTest(e.GetCurrentPoint(Canvas).Position);
-        if (part == SelectedPart)
+        var pos = e.GetCurrentPoint(Root).Position;
+        var slop = PointerSlop;
+        if (!IsExploded)
         {
-            part = EnginePart.None;
+            if (IsEngineHit(pos, slop))
+            {
+                ExplodeEngine();
+            }
         }
-
-        if (part != SelectedPart)
+        else
         {
-            Select(part);
+            var part = HitTest(pos, slop);
+            if (part == EnginePart.None)
+            {
+                CollapseEngine();
+            }
+            else
+            {
+                Select(part == SelectedPart ? EnginePart.None : part);
+            }
         }
 
         e.Handled = true;
@@ -690,9 +1137,15 @@ public sealed partial class AircraftStage : UserControl
 
     private void OnPointerExited(object sender, PointerRoutedEventArgs e) => _hover = EnginePart.None;
 
+    private void OnPointerCanceled(object sender, PointerRoutedEventArgs e)
+    {
+        _pressed = false;
+        _dragging = false;
+    }
+
     private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
-        var delta = e.GetCurrentPoint(Canvas).Properties.MouseWheelDelta;
+        var delta = e.GetCurrentPoint(Root).Properties.MouseWheelDelta;
         _goalDistance = Math.Clamp(_goalDistance * (1f - delta / 1200f), 8f, 90f);
         _lastInteraction = _clock.Elapsed.TotalSeconds;
         e.Handled = true;
@@ -709,6 +1162,9 @@ public sealed partial class AircraftStage : UserControl
             case VirtualKey.Home: ResetView(); break;
             case VirtualKey.Escape when SelectedPart != EnginePart.None:
                 Select(EnginePart.None);
+                break;
+            case VirtualKey.Escape when IsExploded:
+                CollapseEngine();
                 break;
             default:
                 base.OnKeyDown(e);

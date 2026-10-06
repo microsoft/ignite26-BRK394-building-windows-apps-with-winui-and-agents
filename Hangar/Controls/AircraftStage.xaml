@@ -9,15 +9,21 @@
     IsTabStop="True"
     UseSystemFocusVisuals="True">
 
-    <Grid x:Name="Root" Background="Transparent">
+    <!--  Pointer input lives on the Root grid: CanvasControl's transparent pixels are not hit-testable  -->
+    <Grid
+        x:Name="Root"
+        Background="Transparent"
+        PointerCanceled="OnPointerCanceled"
+        PointerCaptureLost="OnPointerCanceled"
+        PointerExited="OnPointerExited"
+        PointerMoved="OnPointerMoved"
+        PointerPressed="OnPointerPressed"
+        PointerReleased="OnPointerReleased"
+        PointerWheelChanged="OnPointerWheelChanged">
         <canvas:CanvasControl
             x:Name="Canvas"
             ClearColor="Transparent"
             Draw="OnDraw"
-            PointerExited="OnPointerExited"
-            PointerMoved="OnPointerMoved"
-            PointerPressed="OnPointerPressed"
-            PointerReleased="OnPointerReleased"
-            PointerWheelChanged="OnPointerWheelChanged" />
+            IsHitTestVisible="False" />
     </Grid>
 </UserControl>

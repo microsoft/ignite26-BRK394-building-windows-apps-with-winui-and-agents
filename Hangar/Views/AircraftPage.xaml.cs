@@ -16,6 +16,7 @@ public sealed partial class AircraftPage : Page
 {
     private const int Flights = 50;
     private bool _syncingChips;
+    private bool _syncingExplode;
 
     public AircraftPage()
     {
@@ -43,8 +44,7 @@ public sealed partial class AircraftPage : Page
         if (e.Parameter is AircraftNavigationArgs { Part: not EnginePart.None } args)
         {
             // "Show on aircraft" from Work Orders: explode and isolate the part.
-            Stage.SetExploded(true);
-            Stage.Select(args.Part);
+            ExplodeAndSelect(args.Part);
         }
     }
 
@@ -54,18 +54,36 @@ public sealed partial class AircraftPage : Page
         Data.HeroStatusChanged += OnHeroStatusChanged;
         RenderAll();
         Stage.SetStatus(Data.Hero.Status);
-        Stage.Focus(FocusState.Programmatic);
+        Stage.Focus(FocusState.Pointer);
 
         if (DebugFocusPart != EnginePart.None)
         {
-            Stage.SetExploded(true);
-            Stage.Select(DebugFocusPart);
+            ExplodeAndSelect(DebugFocusPart);
             DebugFocusPart = EnginePart.None;
         }
+        else if (DebugExplode)
+        {
+            Stage.ExplodeEngine();
+        }
+
+        DebugExplode = false;
     }
 
     /// <summary>Debug rehearsal hook (startpage.txt): explode and focus this part on first load.</summary>
     internal static EnginePart DebugFocusPart { get; set; }
+
+    /// <summary>Debug rehearsal hook (startpage.txt "explode"): fly to Engine 2 and explode it on first load.</summary>
+    internal static bool DebugExplode { get; set; }
+
+    private void ExplodeAndSelect(EnginePart part)
+    {
+        if (!Stage.IsExploded)
+        {
+            Stage.ExplodeEngine();
+        }
+
+        Stage.Select(part);
+    }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
@@ -165,14 +183,33 @@ public sealed partial class AircraftPage : Page
         }
     }
 
-    private void OnExplodeToggled(object sender, RoutedEventArgs e) => Stage.SetExploded(ExplodeToggle.IsChecked == true);
+    private void OnExplodeToggled(object sender, RoutedEventArgs e)
+    {
+        if (_syncingExplode)
+        {
+            return;
+        }
+
+        if (ExplodeToggle.IsChecked == true)
+        {
+            Stage.ExplodeEngine();
+        }
+        else
+        {
+            Stage.CollapseEngine();
+        }
+    }
 
     private void OnStageExplodedChanged(object? sender, bool exploded)
     {
         if (ExplodeToggle.IsChecked != exploded)
         {
+            _syncingExplode = true;
             ExplodeToggle.IsChecked = exploded;
+            _syncingExplode = false;
         }
+
+        RenderPart(Stage.SelectedPart);
     }
 
     private void OnPartChipClick(object sender, RoutedEventArgs e)
@@ -185,8 +222,7 @@ public sealed partial class AircraftPage : Page
         var part = Enum.Parse<EnginePart>(tag);
         if (chip.IsChecked == true)
         {
-            Stage.SetExploded(true);
-            Stage.Select(part);
+            ExplodeAndSelect(part);
         }
         else
         {
@@ -215,7 +251,8 @@ public sealed partial class AircraftPage : Page
             EnginePart.Fan => ("Fan · stage 1 blade 14", "Leading-edge nick suspected — the likely source of the N1 vibration spike. Borescope inspection required before 06:15."),
             EnginePart.Compressor => ("High-pressure compressor", "Borescope history clean. Trend within the fleet band for the last 50 flights."),
             EnginePart.Turbine => ("HP turbine", "EGT margin 42 °C. Blade coating within limits at the last shop visit."),
-            _ => ("Tap a part to isolate it", "Explode Engine 2 to separate the nacelle, fan, compressor and turbine."),
+            _ when Stage.IsExploded => ("Engine 2 · exploded", "50+ LEAP-1A parts across four modules. Tap a chip to isolate the nacelle, fan, compressor or turbine; tap empty space or press Esc to collapse."),
+            _ => ("Tap the engine to explode it", "Tap Engine 2 or press Explode to separate 50+ LEAP-1A parts; tap a chip to isolate the nacelle, fan, compressor or turbine. Esc collapses."),
         };
 
         PartTitle.Text = title;
