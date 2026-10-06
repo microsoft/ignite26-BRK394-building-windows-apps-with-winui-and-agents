@@ -18,7 +18,7 @@ public static class ThemeRes
     public static T Get<T>(FrameworkElement element, string key)
     {
         var themeKey = ThemeKey(element);
-        if (TryFind(Application.Current.Resources, themeKey, key, out var value) && value is T typed)
+        if (TryFindThemed(Application.Current.Resources, themeKey, key, out var value) && value is T typed)
         {
             return typed;
         }
@@ -28,7 +28,9 @@ public static class ThemeRes
 
     public static Brush Brush(FrameworkElement element, string key) => Get<Brush>(element, key);
 
-    private static bool TryFind(ResourceDictionary dictionary, string themeKey, string key, out object? value)
+    // Only inspects ThemeDictionaries: a plain TryGetValue would silently resolve through the
+    // app-level theme (Dark) and shadow the element's Light/HighContrast value.
+    private static bool TryFindThemed(ResourceDictionary dictionary, string themeKey, string key, out object? value)
     {
         if (dictionary.ThemeDictionaries.TryGetValue(themeKey, out var themed)
             && themed is ResourceDictionary themedDictionary
@@ -37,14 +39,9 @@ public static class ThemeRes
             return true;
         }
 
-        if (dictionary.TryGetValue(key, out value))
-        {
-            return true;
-        }
-
         for (var i = dictionary.MergedDictionaries.Count - 1; i >= 0; i--)
         {
-            if (TryFind(dictionary.MergedDictionaries[i], themeKey, key, out value))
+            if (TryFindThemed(dictionary.MergedDictionaries[i], themeKey, key, out value))
             {
                 return true;
             }
