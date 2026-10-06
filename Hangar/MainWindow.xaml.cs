@@ -38,7 +38,13 @@ public sealed partial class MainWindow : Window
         UpdateBadge();
 
         RootGrid.Loaded += (_, _) => StartChipBreathing();
-        NavigationService.Navigate(typeof(FleetPage), null, new SuppressNavigationTransitionInfo());
+        var (startPage, startTheme) = ReadDebugStart();
+        if (startTheme is { } theme)
+        {
+            RootGrid.RequestedTheme = theme;
+        }
+
+        NavigationService.Navigate(startPage, null, new SuppressNavigationTransitionInfo());
         NavView.Loaded += (_, _) => OnNavigated(null, NavigationService.CurrentPage ?? typeof(FleetPage));
     }
 
@@ -182,6 +188,31 @@ public sealed partial class MainWindow : Window
         ResetInfoBar.IsOpen = true;
         _infoBarTimer?.Stop();
         _infoBarTimer = new DispatcherQueueTimerHolder(DispatcherQueue, TimeSpan.FromSeconds(2.5), () => ResetInfoBar.IsOpen = false);
+    }
+
+    /// <summary>
+    /// Debug-only rehearsal hook: LocalState\startpage.txt containing e.g. "WorkOrders" or "Aircraft light"
+    /// opens that page (and theme) at launch so every screen can be captured deterministically.
+    /// </summary>
+    private static (Type Page, ElementTheme? Theme) ReadDebugStart()
+    {
+#if DEBUG
+        try
+        {
+            var file = Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "startpage.txt");
+            if (File.Exists(file))
+            {
+                var parts = File.ReadAllText(file).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var page = parts.Length > 0 ? PageForTag(parts[0]) : null;
+                ElementTheme? theme = parts.Length > 1 && parts[1].Equals("light", StringComparison.OrdinalIgnoreCase) ? ElementTheme.Light : null;
+                return (page ?? typeof(FleetPage), theme);
+            }
+        }
+        catch (IOException)
+        {
+        }
+#endif
+        return (typeof(FleetPage), null);
     }
 
     [DllImport("user32.dll")]

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="Hangar.Controls.FleetTile"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid x:Name="Root" Height="148">
+        <!--  Breathing amber halo (Attention only). Opacity is driven by a composition animation.  -->
+        <Border
+            x:Name="Halo"
+            Margin="-1"
+            Background="{ThemeResource AttentionSoftBrush}"
+            BorderBrush="{ThemeResource AttentionBrush}"
+            BorderThickness="2"
+            CornerRadius="{StaticResource CardCornerRadius}"
+            Visibility="Collapsed" />
+
+        <!--  Faint silhouette, nose to the right.  -->
+        <Path
+            x:Name="Silhouette"
+            Width="84"
+            Height="84"
+            Margin="0,0,-6,-10"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Data="M50,4 C54,4 56,10 56,18 L56,38 L94,58 L94,65 L56,54 L56,78 L68,88 L68,94 L50,89 L32,94 L32,88 L44,78 L44,54 L6,65 L6,58 L44,38 L44,18 C44,10 46,4 50,4 Z"
+            Fill="{ThemeResource AircraftBodyBrush}"
+            Opacity="0.16"
+            RenderTransformOrigin="0.5,0.5"
+            Stretch="Uniform">
+            <Path.RenderTransform>
+                <RotateTransform Angle="90" />
+            </Path.RenderTransform>
+        </Path>
+
+        <Grid Padding="18,16,18,16" RowSpacing="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock
+                x:Name="TailText"
+                FontSize="18"
+                Foreground="{ThemeResource PrimaryTextBrush}"
+                Style="{StaticResource TailTextStyle}" />
+
+            <Grid
+                Grid.Column="1"
+                Width="18"
+                Height="18"
+                VerticalAlignment="Center">
+                <Ellipse
+                    x:Name="Ring"
+                    Stroke="{ThemeResource HealthyBrush}"
+                    StrokeThickness="2" />
+                <Ellipse
+                    x:Name="Dot"
+                    Width="8"
+                    Height="8"
+                    Fill="{ThemeResource HealthyBrush}" />
+            </Grid>
+
+            <TextBlock
+                x:Name="FlightText"
+                Grid.Row="1"
+                Grid.ColumnSpan="2"
+                Foreground="{ThemeResource SecondaryTextBrush}"
+                Style="{StaticResource BodyTextStyle}" />
+
+            <StackPanel
+                Grid.Row="3"
+                Grid.ColumnSpan="2"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Border
+                    x:Name="Pill"
+                    Background="{ThemeResource HealthySoftBrush}"
+                    BorderBrush="{ThemeResource HealthyBrush}"
+                    Style="{StaticResource PillBorderStyle}">
+                    <TextBlock
+                        x:Name="StatusLabel"
+                        Foreground="{ThemeResource HealthyBrush}"
+                        Style="{StaticResource PillTextStyle}"
+                        Text="Serviceable" />
+                </Border>
+                <TextBlock
+                    x:Name="NoteText"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TertiaryTextBrush}"
+                    Style="{StaticResource BodyTextStyle}"
+                    FontSize="12" />
+            </StackPanel>
+        </Grid>
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="StatusStates">
+                <VisualState x:Name="Healthy" />
+                <VisualState x:Name="Attention">
+                    <VisualState.Setters>
+                        <Setter Target="Halo.Visibility" Value="Visible" />
+                        <Setter Target="Ring.Stroke" Value="{ThemeResource AttentionBrush}" />
+                        <Setter Target="Dot.Fill" Value="{ThemeResource AttentionBrush}" />
+                        <Setter Target="Pill.Background" Value="{ThemeResource AttentionSoftBrush}" />
+                        <Setter Target="Pill.BorderBrush" Value="{ThemeResource AttentionBrush}" />
+                        <Setter Target="StatusLabel.Foreground" Value="{ThemeResource AttentionBrush}" />
+                        <Setter Target="StatusLabel.Text" Value="Attention" />
+                        <Setter Target="Silhouette.Fill" Value="{ThemeResource AttentionBrush}" />
+                        <Setter Target="Silhouette.Opacity" Value="0.35" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Maintenance">
+                    <VisualState.Setters>
+                        <Setter Target="Ring.Stroke" Value="{ThemeResource NeutralStatusBrush}" />
+                        <Setter Target="Dot.Fill" Value="{ThemeResource NeutralStatusBrush}" />
+                        <Setter Target="Pill.Background" Value="{ThemeResource NeutralSoftBrush}" />
+                        <Setter Target="Pill.BorderBrush" Value="{ThemeResource NeutralStatusBrush}" />
+                        <Setter Target="StatusLabel.Foreground" Value="{ThemeResource SecondaryTextBrush}" />
+                        <Setter Target="StatusLabel.Text" Value="In check" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Aog">
+                    <VisualState.Setters>
+                        <Setter Target="Ring.Stroke" Value="{ThemeResource CriticalBrush}" />
+                        <Setter Target="Dot.Fill" Value="{ThemeResource CriticalBrush}" />
+                        <Setter Target="Pill.Background" Value="{ThemeResource CriticalSoftBrush}" />
+                        <Setter Target="Pill.BorderBrush" Value="{ThemeResource CriticalBrush}" />
+                        <Setter Target="StatusLabel.Foreground" Value="{ThemeResource CriticalBrush}" />
+                        <Setter Target="StatusLabel.Text" Value="AOG" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+    </Grid>
+</UserControl>

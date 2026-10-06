@@ -22,21 +22,21 @@ public enum EnginePart
 
 public sealed partial class WorkOrder : ObservableValidator
 {
-    public required int Number { get; init; }
+    public int Number { get; init; }
 
     public string NumberText => $"WO-{Number}";
 
-    public required string Tail { get; init; }
+    public string Tail { get; init; } = string.Empty;
 
-    public required string Component { get; init; }
+    public string Component { get; init; } = string.Empty;
 
-    public required string Ata { get; init; }
+    public string Ata { get; init; } = string.Empty;
 
-    public required string PartNumber { get; init; }
+    public string PartNumber { get; init; } = string.Empty;
 
-    public required string Technician { get; init; }
+    public string Technician { get; init; } = string.Empty;
 
-    public required DateTime Opened { get; init; }
+    public DateTime Opened { get; init; }
 
     public string OpenedText => Opened.ToString("dd MMM yyyy");
 

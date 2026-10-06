@@ -144,7 +144,7 @@ public sealed class FleetDataService
             string tail;
             string flight;
             string type;
-            if (i == 7)
+            if (i == 2)
             {
                 tail = HeroTail;
                 flight = HeroFlight;

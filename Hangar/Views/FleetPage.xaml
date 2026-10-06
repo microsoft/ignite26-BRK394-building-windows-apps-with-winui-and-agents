@@ -2,8 +2,219 @@
 <Page
     x:Class="Hangar.Views.FleetPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Padding="40">
-        <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="FleetPage" />
-    </Grid>
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:charts="using:Microsoft.UI.Xaml.Controls.Charts"
+    xmlns:controls="using:Hangar.Controls"
+    xmlns:models="using:Hangar.Models"
+    NavigationCacheMode="Required">
+
+    <ScrollViewer x:Name="Scroller" HorizontalScrollMode="Disabled">
+        <Grid Padding="40,28,40,40" RowSpacing="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!--  Hero header  -->
+            <Grid ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="NIGHT SHIFT · SEA HANGAR 3 · 42 AIRCRAFT" />
+                    <TextBlock
+                        x:Name="HeadlineText"
+                        AutomationProperties.HeadingLevel="Level1"
+                        Style="{StaticResource HeroTextStyle}"
+                        Text="1 aircraft needs you" />
+                    <TextBlock
+                        x:Name="SubheadText"
+                        Foreground="{ThemeResource SecondaryTextBrush}"
+                        Style="{StaticResource BodyTextStyle}"
+                        FontSize="16"
+                        Text="CA 2207 landed with an Engine 2 vibration exceedance. Next departure 06:15, 180 passengers." />
+                </StackPanel>
+
+                <!--  Spotlight call to action for the hero aircraft  -->
+                <Button
+                    x:Name="SpotlightButton"
+                    Grid.Column="1"
+                    VerticalAlignment="Bottom"
+                    AutomationProperties.AutomationId="FleetSpotlightButton"
+                    AutomationProperties.Name="Open CA 2207 on the aircraft stage"
+                    Click="OnSpotlightClick"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Padding="20,12"
+                    CornerRadius="{StaticResource PillCornerRadius}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon FontSize="16" Glyph="&#xE709;" />
+                        <TextBlock FontWeight="SemiBold" Text="Open CA 2207" />
+                        <FontIcon FontSize="12" Glyph="&#xE72A;" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!--  KPI strip  -->
+            <Grid Grid.Row="1" ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <controls:KpiCard
+                    x:Name="AvailabilityKpi"
+                    Caption="Target 98.0% · 30 days"
+                    Label="FLEET AVAILABILITY"
+                    Value="97.6%" />
+                <controls:KpiCard
+                    x:Name="AogKpi"
+                    Grid.Column="1"
+                    Caption="N2231C · awaiting part at SEA"
+                    Label="AIRCRAFT ON GROUND"
+                    Value="1" />
+                <controls:KpiCard
+                    x:Name="OpenWoKpi"
+                    Grid.Column="2"
+                    Caption="14 due before first wave"
+                    Label="OPEN WORK ORDERS"
+                    Value="128" />
+                <controls:KpiCard
+                    x:Name="OnTimeKpi"
+                    Grid.Column="3"
+                    Caption="+1.2 pts vs. last week"
+                    Label="ON-TIME DEPARTURE"
+                    Value="94%" />
+            </Grid>
+
+            <!--  Hero availability chart  -->
+            <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="24,20,24,16">
+                <Grid RowSpacing="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="260" />
+                    </Grid.RowDefinitions>
+                    <Grid ColumnSpacing="24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="2">
+                            <TextBlock
+                                AutomationProperties.HeadingLevel="Level2"
+                                Style="{StaticResource SectionTitleTextStyle}"
+                                Text="Fleet availability · 30 days" />
+                            <TextBlock
+                                Foreground="{ThemeResource SecondaryTextBrush}"
+                                Style="{StaticResource BodyTextStyle}"
+                                Text="Percentage of the fleet serviceable at first departure wave" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="20">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Rectangle
+                                    Width="18"
+                                    Height="3"
+                                    VerticalAlignment="Center"
+                                    Fill="{ThemeResource AccentCyanBrush}"
+                                    RadiusX="1.5"
+                                    RadiusY="1.5" />
+                                <TextBlock Style="{StaticResource BodyTextStyle}" Foreground="{ThemeResource SecondaryTextBrush}" Text="Availability" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Line
+                                    VerticalAlignment="Center"
+                                    Stroke="{ThemeResource ChartTargetBrush}"
+                                    StrokeDashArray="2,2"
+                                    StrokeThickness="2"
+                                    X1="0"
+                                    X2="18" />
+                                <TextBlock Style="{StaticResource BodyTextStyle}" Foreground="{ThemeResource SecondaryTextBrush}" Text="Target 98%" />
+                            </StackPanel>
+                            <Border
+                                x:Name="DipPill"
+                                Background="{ThemeResource AttentionSoftBrush}"
+                                BorderBrush="{ThemeResource AttentionBrush}"
+                                Style="{StaticResource PillBorderStyle}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Ellipse
+                                        Width="8"
+                                        Height="8"
+                                        VerticalAlignment="Center"
+                                        Fill="{ThemeResource AttentionBrush}" />
+                                    <TextBlock
+                                        x:Name="DipText"
+                                        Foreground="{ThemeResource AttentionBrush}"
+                                        Style="{StaticResource PillTextStyle}"
+                                        Text="Today 95.2% · CA 2207 held" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                    <charts:Chart
+                        x:Name="AvailabilityChart"
+                        Grid.Row="1"
+                        AutomationProperties.Name="Fleet availability over the last 30 days compared with the 98 percent target. Today dips to 95.2 percent." />
+                </Grid>
+            </Border>
+
+            <!--  Fleet grid header  -->
+            <Grid Grid.Row="3" Margin="0,8,0,-8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    AutomationProperties.HeadingLevel="Level2"
+                    Style="{StaticResource SectionTitleTextStyle}"
+                    Text="Fleet" />
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="20">
+                    <TextBlock x:Name="HealthyCount" Foreground="{ThemeResource SecondaryTextBrush}" Style="{StaticResource BodyTextStyle}" />
+                    <TextBlock x:Name="AttentionCount" Foreground="{ThemeResource AttentionBrush}" Style="{StaticResource BodyTextStyle}" />
+                    <TextBlock x:Name="MaintenanceCount" Foreground="{ThemeResource SecondaryTextBrush}" Style="{StaticResource BodyTextStyle}" />
+                    <TextBlock x:Name="AogCount" Foreground="{ThemeResource CriticalBrush}" Style="{StaticResource BodyTextStyle}" />
+                </StackPanel>
+            </Grid>
+
+            <!--  Fleet grid  -->
+            <ItemsRepeater
+                x:Name="FleetRepeater"
+                Grid.Row="4"
+                AutomationProperties.Name="Fleet aircraft"
+                ItemsSource="{x:Bind Data.Fleet, Mode=OneWay}"
+                TabFocusNavigation="Local"
+                XYFocusKeyboardNavigation="Enabled">
+                <ItemsRepeater.Layout>
+                    <UniformGridLayout
+                        ItemsStretch="Fill"
+                        MinColumnSpacing="12"
+                        MinItemHeight="148"
+                        MinItemWidth="232"
+                        MinRowSpacing="12" />
+                </ItemsRepeater.Layout>
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="models:Aircraft">
+                        <Button
+                            AutomationProperties.AutomationId="{x:Bind Tail, Mode=OneTime}"
+                            AutomationProperties.Name="{x:Bind Tail, Mode=OneTime}"
+                            Click="OnTileClick"
+                            Style="{StaticResource TileButtonStyle}"
+                            Tag="{x:Bind Mode=OneTime}">
+                            <controls:FleetTile Aircraft="{x:Bind Mode=OneWay}" />
+                        </Button>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+        </Grid>
+    </ScrollViewer>
 </Page>

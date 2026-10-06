@@ -69,13 +69,13 @@
                                     VerticalAlignment="Center"
                                     FontSize="16"
                                     Foreground="{ThemeResource AccentCyanBrush}"
-                                    Glyph="{x:Bind Glyph}" />
+                                    Glyph="{x:Bind Glyph, Mode=OneTime}" />
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind Title}" />
+                                    <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind Title, Mode=OneTime}" />
                                     <TextBlock
                                         FontSize="12"
                                         Foreground="{ThemeResource SecondaryTextBrush}"
-                                        Text="{x:Bind Detail}"
+                                        Text="{x:Bind Detail, Mode=OneTime}"
                                         TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                             </Grid>
@@ -121,7 +121,7 @@
                                         FontFamily="{StaticResource MonoFontFamily}"
                                         Foreground="{ThemeResource AttentionBrush}"
                                         Style="{StaticResource PillTextStyle}"
-                                        Text="{x:Bind ViewModel.FlightLabel}" />
+                                        Text="{x:Bind ViewModel.FlightLabel, Mode=OneTime}" />
                                     <TextBlock
                                         Foreground="{ThemeResource PrimaryTextBrush}"
                                         Style="{StaticResource PillTextStyle}"
@@ -147,7 +147,7 @@
                                         FontFamily="{StaticResource MonoFontFamily}"
                                         Foreground="{ThemeResource HealthyBrush}"
                                         Style="{StaticResource PillTextStyle}"
-                                        Text="{x:Bind ViewModel.FlightLabel}" />
+                                        Text="{x:Bind ViewModel.FlightLabel, Mode=OneTime}" />
                                     <TextBlock
                                         Foreground="{ThemeResource PrimaryTextBrush}"
                                         Style="{StaticResource PillTextStyle}"

@@ -13,15 +13,15 @@ public enum AircraftStatus
 
 public sealed partial class Aircraft : ObservableObject
 {
-    public required string Tail { get; init; }
+    public string Tail { get; init; } = string.Empty;
 
-    public required string Flight { get; init; }
+    public string Flight { get; init; } = string.Empty;
 
-    public required string Type { get; init; }
+    public string Type { get; init; } = string.Empty;
 
-    public required string Station { get; init; }
+    public string Station { get; init; } = string.Empty;
 
-    public required string NextDeparture { get; init; }
+    public string NextDeparture { get; init; } = string.Empty;
 
     public int Cycles { get; init; }
 
