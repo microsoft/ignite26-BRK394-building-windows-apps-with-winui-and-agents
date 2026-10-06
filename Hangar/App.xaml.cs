@@ -42,16 +42,40 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        UnhandledException += (_, e) => LogCrash(e.Exception);
     }
 
     /// <summary>
     /// Invoked when the application is launched.
     /// </summary>
     /// <param name="args">Details about the launch request and process.</param>
+    internal static void LogCrash(Exception ex)
+    {
+        try
+        {
+            var path = System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "crash.log");
+            System.IO.File.AppendAllText(path, $"{DateTime.Now:O}\n{ex}\n\n");
+        }
+        catch
+        {
+            // Never throw from the crash logger.
+        }
+    }
+
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        Window = new MainWindow();
+        try
+        {
+            Window = new MainWindow();
+        }
+        catch (Exception ex)
+        {
+            LogCrash(ex);
+            throw;
+        }
+
         DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         Window.Activate();
     }
 }
+
