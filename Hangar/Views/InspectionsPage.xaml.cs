@@ -63,7 +63,45 @@ public sealed partial class InspectionsPage : Page
         }
 
         RenderStatus();
+#if DEBUG
+        if (DebugAutoSign)
+        {
+            DebugAutoSign = false;
+            var timer = DispatcherQueue.CreateTimer();
+            timer.Interval = TimeSpan.FromSeconds(2);
+            timer.IsRepeating = false;
+            timer.Tick += (_, _) => DebugSign();
+            timer.Start();
+        }
+#endif
     }
+
+    /// <summary>Debug-only rehearsal hook (startpage.txt "Inspections dark sign"): writes a synthetic signature and signs off.</summary>
+    internal static bool DebugAutoSign { get; set; }
+
+#if DEBUG
+    private void DebugSign()
+    {
+        var builder = new InkStrokeBuilder();
+        builder.SetDefaultDrawingAttributes(SignatureInk.InkPresenter.CopyDefaultDrawingAttributes());
+        var w = SignatureInk.ActualWidth;
+        var h = SignatureInk.ActualHeight;
+        var points = new List<Point>();
+        for (var i = 0; i <= 60; i++)
+        {
+            var t = i / 60.0;
+            points.Add(new Point(w * (0.12 + 0.7 * t), h * (0.55 + 0.18 * Math.Sin(t * Math.PI * 5) * (1 - t * 0.5))));
+        }
+
+        SignatureInk.InkPresenter.StrokeContainer.AddStroke(builder.CreateStroke(points));
+        SignatureInk.InkPresenter.StrokeContainer.AddStroke(builder.CreateStroke(new[]
+        {
+            new Point(w * 0.2, h * 0.78), new Point(w * 0.5, h * 0.74), new Point(w * 0.86, h * 0.7),
+        }));
+        UpdateSignatureState();
+        OnSignAndRelease(SignButton, new RoutedEventArgs());
+    }
+#endif
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {

@@ -205,6 +205,7 @@ public sealed partial class MainWindow : Window
                 var parts = File.ReadAllText(file).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 var page = parts.Length > 0 ? PageForTag(parts[0]) : null;
                 ElementTheme? theme = parts.Length > 1 && parts[1].Equals("light", StringComparison.OrdinalIgnoreCase) ? ElementTheme.Light : null;
+                InspectionsPage.DebugAutoSign = parts.Contains("sign", StringComparer.OrdinalIgnoreCase);
                 return (page ?? typeof(FleetPage), theme);
             }
         }
