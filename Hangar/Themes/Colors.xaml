@@ -21,6 +21,8 @@
             <Color x:Key="CanvasColor">#0B0F14</Color>
             <Color x:Key="AccentCyanColor">#3AD1F0</Color>
             <Color x:Key="AttentionColor">#FFB020</Color>
+            <Color x:Key="HeatMidColor">#66FF6A1F</Color>
+            <Color x:Key="StageShadowColor">#CC000000</Color>
             <Color x:Key="CriticalColor">#FF5A5F</Color>
             <Color x:Key="HealthyColor">#4ADE80</Color>
             <Color x:Key="ChartGridColor">#1FFFFFFF</Color>
@@ -74,11 +76,11 @@
                 <GradientStop Offset="0.55" Color="#0D3AD1F0" />
                 <GradientStop Offset="1" Color="#00000000" />
             </RadialGradientBrush>
-            <LinearGradientBrush x:Key="StageFloorBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Offset="0" Color="#00000000" />
-                <GradientStop Offset="0.6" Color="#40000000" />
-                <GradientStop Offset="1" Color="#99000000" />
-            </LinearGradientBrush>
+            <RadialGradientBrush x:Key="StageFloorBrush" Center="0.5,0.2" RadiusX="0.42" RadiusY="0.9" GradientOrigin="0.5,0.2">
+                <GradientStop Offset="0" Color="#663AD1F0" />
+                <GradientStop Offset="0.55" Color="#223AD1F0" />
+                <GradientStop Offset="1" Color="#003AD1F0" />
+            </RadialGradientBrush>
             <LinearGradientBrush x:Key="FuselageBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0" Color="#F4F8FB" />
                 <GradientStop Offset="0.45" Color="#C9D3DD" />
@@ -126,6 +128,8 @@
             <Color x:Key="CanvasColor">#F4F6F8</Color>
             <Color x:Key="AccentCyanColor">#0E9FC0</Color>
             <Color x:Key="AttentionColor">#C77700</Color>
+            <Color x:Key="HeatMidColor">#55E0501A</Color>
+            <Color x:Key="StageShadowColor">#55203040</Color>
             <Color x:Key="CriticalColor">#D13438</Color>
             <Color x:Key="HealthyColor">#14834A</Color>
             <Color x:Key="ChartGridColor">#1F000000</Color>
@@ -179,10 +183,11 @@
                 <GradientStop Offset="0.55" Color="#110E9FC0" />
                 <GradientStop Offset="1" Color="#00FFFFFF" />
             </RadialGradientBrush>
-            <LinearGradientBrush x:Key="StageFloorBrush" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Offset="0" Color="#00FFFFFF" />
-                <GradientStop Offset="1" Color="#1A000000" />
-            </LinearGradientBrush>
+            <RadialGradientBrush x:Key="StageFloorBrush" Center="0.5,0.2" RadiusX="0.42" RadiusY="0.9" GradientOrigin="0.5,0.2">
+                <GradientStop Offset="0" Color="#550E6F86" />
+                <GradientStop Offset="0.55" Color="#1A0E6F86" />
+                <GradientStop Offset="1" Color="#000E6F86" />
+            </RadialGradientBrush>
             <LinearGradientBrush x:Key="FuselageBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0" Color="#FFFFFF" />
                 <GradientStop Offset="0.5" Color="#E3E9EE" />
@@ -222,6 +227,8 @@
             <StaticResource x:Key="CanvasColor" ResourceKey="SystemColorWindowColor" />
             <StaticResource x:Key="AccentCyanColor" ResourceKey="SystemColorHighlightColor" />
             <StaticResource x:Key="AttentionColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HeatMidColor" ResourceKey="SystemColorHighlightColor" />
+            <Color x:Key="StageShadowColor">Transparent</Color>
             <StaticResource x:Key="CriticalColor" ResourceKey="SystemColorHighlightColor" />
             <StaticResource x:Key="HealthyColor" ResourceKey="SystemColorWindowTextColor" />
             <StaticResource x:Key="ChartGridColor" ResourceKey="SystemColorGrayTextColor" />

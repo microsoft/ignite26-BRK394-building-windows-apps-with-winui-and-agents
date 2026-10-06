@@ -139,9 +139,18 @@ public sealed class ChartFactory
             throw new InvalidOperationException("Call Axes() before adding series.");
         }
 
-        var ys = new Samples { ItemsSource = values.ToList() };
+        var list = values.ToList();
+        var ys = new Samples { ItemsSource = list };
         _chart.Data.Add(ys);
-        series.XValues = _x;
+        var xs = _x;
+        if (_x.ItemsSource is IList<double> all && list.Count != all.Count)
+        {
+            // Partial series (e.g. a scrubbed timeline) get their own X samples so X/Y stay the same length.
+            xs = new Samples { ItemsSource = Enumerable.Range(0, list.Count).Select(i => (double)i).ToList() };
+            _chart.Data.Add(xs);
+        }
+
+        series.XValues = xs;
         series.YValues = ys;
         series.XAxis = _xAxis;
         series.YAxis = _yAxis;

@@ -2,8 +2,296 @@
 <Page
     x:Class="Hangar.Views.AircraftPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Padding="40">
-        <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="AircraftPage" />
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:charts="using:Microsoft.UI.Xaml.Controls.Charts"
+    xmlns:controls="using:Hangar.Controls"
+    NavigationCacheMode="Required">
+
+    <Page.Resources>
+        <Style x:Key="VitalLabelStyle" TargetType="TextBlock" BasedOn="{StaticResource EyebrowTextStyle}">
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+        <Style x:Key="VitalValueStyle" TargetType="TextBlock" BasedOn="{StaticResource KpiValueTextStyle}">
+            <Setter Property="FontSize" Value="26" />
+        </Style>
+        <Style x:Key="PartChipStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+            <Setter Property="CornerRadius" Value="{StaticResource PillCornerRadius}" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+    </Page.Resources>
+
+    <Grid x:Name="RootGrid">
+        <!--  Full-bleed stage: the aircraft is the canvas, everything else floats over it  -->
+        <controls:AircraftStage
+            x:Name="Stage"
+            Margin="300,40,420,110"
+            ExplodedChanged="OnStageExplodedChanged"
+            PartSelected="OnStagePartSelected" />
+
+        <Grid Padding="40,28,40,28" ColumnSpacing="24" RowSpacing="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="440" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!--  Header  -->
+            <StackPanel Grid.ColumnSpan="2" Spacing="2">
+                <TextBlock x:Name="EyebrowText" Style="{StaticResource EyebrowTextStyle}" Text="CA 2207 · A321NEO · SEA → JFK 06:15" />
+                <StackPanel Orientation="Horizontal" Spacing="18">
+                    <TextBlock
+                        x:Name="HeaderTail"
+                        VerticalAlignment="Center"
+                        AutomationProperties.HeadingLevel="Level1"
+                        FontSize="56"
+                        Style="{StaticResource TailTextStyle}"
+                        Text="N2207C" />
+                    <Border
+                        x:Name="StatusPill"
+                        VerticalAlignment="Center"
+                        AutomationProperties.AutomationId="AircraftStatusPill"
+                        Style="{StaticResource PillBorderStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Ellipse x:Name="StatusDot" Width="8" Height="8" />
+                            <TextBlock x:Name="StatusText" Style="{StaticResource PillTextStyle}" Text="Engine 2 vibration · hold" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+
+            <!--  Left glass: vitals  -->
+            <Border
+                Grid.Row="1"
+                VerticalAlignment="Top"
+                AutomationProperties.AutomationId="AircraftVitalsPanel"
+                AutomationProperties.Name="Aircraft vitals"
+                Style="{StaticResource GlassPanelStyle}">
+                <StackPanel Padding="24" Spacing="20">
+                    <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Vitals" />
+                    <Grid ColumnSpacing="16" RowSpacing="18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Spacing="2">
+                            <TextBlock Style="{StaticResource VitalLabelStyle}" Text="CYCLES" />
+                            <TextBlock x:Name="CyclesText" Style="{StaticResource VitalValueStyle}" Text="8,412" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Style="{StaticResource VitalLabelStyle}" Text="FLIGHT HOURS" />
+                            <TextBlock x:Name="HoursText" Style="{StaticResource VitalValueStyle}" Text="19,877" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Spacing="2">
+                            <TextBlock Style="{StaticResource VitalLabelStyle}" Text="NEXT CHECK" />
+                            <TextBlock x:Name="NextCheckText" Style="{StaticResource VitalValueStyle}" Text="23 d" />
+                            <TextBlock x:Name="NextCheckKind" Foreground="{ThemeResource TertiaryTextBrush}" Style="{StaticResource BodyTextStyle}" Text="A-check" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Spacing="2">
+                            <TextBlock Style="{StaticResource VitalLabelStyle}" Text="STATION" />
+                            <TextBlock x:Name="StationText" Style="{StaticResource VitalValueStyle}" Text="SEA" />
+                            <TextBlock Foreground="{ThemeResource TertiaryTextBrush}" Style="{StaticResource BodyTextStyle}" Text="Hangar 3 · Bay 2" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource GlassStrokeBrush}" />
+
+                    <StackPanel Spacing="10">
+                        <TextBlock Style="{StaticResource VitalLabelStyle}" Text="ENGINE 2 · LEAP-1A" />
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Foreground="{ThemeResource SecondaryTextBrush}" Style="{StaticResource BodyTextStyle}" Text="N1 vibration · last" />
+                            <TextBlock
+                                x:Name="LastVibText"
+                                Grid.Column="1"
+                                Foreground="{ThemeResource AttentionBrush}"
+                                Style="{StaticResource MonoTextStyle}"
+                                Text="2.31 ips" />
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Foreground="{ThemeResource SecondaryTextBrush}" Style="{StaticResource BodyTextStyle}" Text="Limit" />
+                            <TextBlock Grid.Column="1" Foreground="{ThemeResource SecondaryTextBrush}" Style="{StaticResource MonoTextStyle}" Text="1.80 ips" />
+                        </Grid>
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Foreground="{ThemeResource SecondaryTextBrush}" Style="{StaticResource BodyTextStyle}" Text="ESN" />
+                            <TextBlock Grid.Column="1" Foreground="{ThemeResource SecondaryTextBrush}" Style="{StaticResource MonoTextStyle}" Text="598-214" />
+                        </Grid>
+                    </StackPanel>
+
+                    <Button
+                        x:Name="WorkOrdersButton"
+                        HorizontalAlignment="Stretch"
+                        AutomationProperties.AutomationId="AircraftWorkOrdersButton"
+                        Click="OnWorkOrdersClick"
+                        CornerRadius="{StaticResource PillCornerRadius}"
+                        Padding="16,10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon FontSize="14" Glyph="&#xE9D5;" />
+                            <TextBlock x:Name="WorkOrdersButtonText" Text="Engine 2 work orders" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!--  Right glass: Engine 2 vibration chart  -->
+            <Border
+                Grid.Row="0"
+                Grid.RowSpan="2"
+                Grid.Column="2"
+                VerticalAlignment="Top"
+                AutomationProperties.AutomationId="VibrationPanel"
+                AutomationProperties.Name="Engine 2 vibration, last 50 flights"
+                Style="{StaticResource GlassPanelStyle}">
+                <StackPanel Padding="24,22,24,20" Spacing="14">
+                    <Grid>
+                        <StackPanel Spacing="2">
+                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="ENGINE 2 · N1 VIBRATION" />
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Last 50 flights" />
+                        </StackPanel>
+                        <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Spacing="0">
+                            <TextBlock
+                                x:Name="ScrubValueText"
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource AttentionBrush}"
+                                Style="{StaticResource KpiValueTextStyle}"
+                                FontSize="30"
+                                Text="2.31" />
+                            <TextBlock
+                                x:Name="ScrubFlightText"
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource TertiaryTextBrush}"
+                                Style="{StaticResource MonoTextStyle}"
+                                FontSize="12"
+                                Text="ips · flight 50" />
+                        </StackPanel>
+                    </Grid>
+
+                    <charts:Chart
+                        x:Name="VibrationChart"
+                        Height="260"
+                        AutomationProperties.AutomationId="VibrationChart"
+                        AutomationProperties.Name="Engine 2 vibration chart with fleet average band and 1.8 threshold" />
+
+                    <!--  Legend  -->
+                    <StackPanel Orientation="Horizontal" Spacing="18">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Rectangle Width="14" Height="3" VerticalAlignment="Center" Fill="{ThemeResource AttentionBrush}" />
+                            <TextBlock Foreground="{ThemeResource SecondaryTextBrush}" FontSize="12" Text="CA 2207 Eng 2" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Rectangle Width="14" Height="10" VerticalAlignment="Center" Fill="{ThemeResource ChartBandBrush}" />
+                            <TextBlock Foreground="{ThemeResource SecondaryTextBrush}" FontSize="12" Text="Fleet average" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Line VerticalAlignment="Center" Stroke="{ThemeResource CriticalBrush}" StrokeDashArray="3,2" StrokeThickness="2" X1="0" X2="14" />
+                            <TextBlock Foreground="{ThemeResource SecondaryTextBrush}" FontSize="12" Text="Limit 1.8" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <Rectangle Height="1" Fill="{ThemeResource GlassStrokeBrush}" />
+
+                    <!--  Selected part detail  -->
+                    <StackPanel x:Name="PartDetail" Spacing="6">
+                        <TextBlock x:Name="PartEyebrow" Style="{StaticResource EyebrowTextStyle}" Text="SELECTED PART" />
+                        <TextBlock x:Name="PartTitle" Style="{StaticResource SectionTitleTextStyle}" Text="Tap a part to isolate it" />
+                        <TextBlock
+                            x:Name="PartBody"
+                            Foreground="{ThemeResource SecondaryTextBrush}"
+                            Style="{StaticResource BodyTextStyle}"
+                            Text="Explode Engine 2 to separate the nacelle, fan, compressor and turbine."
+                            TextWrapping="WrapWholeWords" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!--  Bottom dock: commands + timeline scrubber  -->
+            <Border
+                Grid.Row="2"
+                Grid.ColumnSpan="3"
+                HorizontalAlignment="Center"
+                Padding="16,10"
+                Style="{StaticResource GlassPanelStyle}"
+                CornerRadius="24">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <ToggleButton
+                        x:Name="ExplodeToggle"
+                        AutomationProperties.AutomationId="ExplodeToggle"
+                        AutomationProperties.Name="Explode Engine 2"
+                        Checked="OnExplodeToggled"
+                        CornerRadius="{StaticResource PillCornerRadius}"
+                        Padding="16,8"
+                        Unchecked="OnExplodeToggled">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xF156;" />
+                            <TextBlock FontWeight="SemiBold" Text="Explode" />
+                        </StackPanel>
+                        <ToggleButton.KeyboardAccelerators>
+                            <KeyboardAccelerator Key="E" Modifiers="Control" />
+                        </ToggleButton.KeyboardAccelerators>
+                    </ToggleButton>
+
+                    <StackPanel x:Name="PartChips" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <ToggleButton x:Name="NacelleChip" AutomationProperties.AutomationId="PartChipNacelle" Click="OnPartChipClick" Content="Nacelle" Style="{StaticResource PartChipStyle}" Tag="Nacelle" />
+                        <ToggleButton x:Name="FanChip" AutomationProperties.AutomationId="PartChipFan" Click="OnPartChipClick" Content="Fan" Style="{StaticResource PartChipStyle}" Tag="Fan" />
+                        <ToggleButton x:Name="CompressorChip" AutomationProperties.AutomationId="PartChipCompressor" Click="OnPartChipClick" Content="Compressor" Style="{StaticResource PartChipStyle}" Tag="Compressor" />
+                        <ToggleButton x:Name="TurbineChip" AutomationProperties.AutomationId="PartChipTurbine" Click="OnPartChipClick" Content="Turbine" Style="{StaticResource PartChipStyle}" Tag="Turbine" />
+                    </StackPanel>
+
+                    <Rectangle Width="1" Margin="0,4" Fill="{ThemeResource GlassStrokeBrush}" />
+
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal" Spacing="12">
+                        <FontIcon FontSize="14" Foreground="{ThemeResource SecondaryTextBrush}" Glyph="&#xE81C;" />
+                        <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TertiaryTextBrush}" Style="{StaticResource MonoTextStyle}" FontSize="12" Text="FLT 1" />
+                        <Slider
+                            x:Name="Scrubber"
+                            Width="360"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AutomationId="FlightScrubber"
+                            AutomationProperties.Name="Flight timeline"
+                            IsThumbToolTipEnabled="False"
+                            Maximum="49"
+                            Minimum="0"
+                            StepFrequency="1"
+                            Value="49"
+                            ValueChanged="OnScrubberChanged" />
+                        <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TertiaryTextBrush}" Style="{StaticResource MonoTextStyle}" FontSize="12" Text="FLT 50" />
+                    </StackPanel>
+
+                    <Rectangle Width="1" Margin="0,4" Fill="{ThemeResource GlassStrokeBrush}" />
+
+                    <Button
+                        x:Name="ResetViewButton"
+                        AutomationProperties.AutomationId="ResetViewButton"
+                        AutomationProperties.Name="Reset view"
+                        Click="OnResetViewClick"
+                        CornerRadius="{StaticResource PillCornerRadius}"
+                        Padding="10,8"
+                        ToolTipService.ToolTip="Reset view (Home)">
+                        <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Page>
