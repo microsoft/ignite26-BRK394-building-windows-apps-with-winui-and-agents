@@ -55,7 +55,17 @@ public sealed partial class AircraftPage : Page
         RenderAll();
         Stage.SetStatus(Data.Hero.Status);
         Stage.Focus(FocusState.Programmatic);
+
+        if (DebugFocusPart != EnginePart.None)
+        {
+            Stage.SetExploded(true);
+            Stage.Select(DebugFocusPart);
+            DebugFocusPart = EnginePart.None;
+        }
     }
+
+    /// <summary>Debug rehearsal hook (startpage.txt): explode and focus this part on first load.</summary>
+    internal static EnginePart DebugFocusPart { get; set; }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {

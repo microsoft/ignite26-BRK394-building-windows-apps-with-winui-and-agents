@@ -26,7 +26,7 @@
         <!--  Full-bleed stage: the aircraft is the canvas, everything else floats over it  -->
         <controls:AircraftStage
             x:Name="Stage"
-            Margin="300,40,420,110"
+            FocusPadding="380,150,480,120"
             ExplodedChanged="OnStageExplodedChanged"
             PartSelected="OnStagePartSelected" />
 
