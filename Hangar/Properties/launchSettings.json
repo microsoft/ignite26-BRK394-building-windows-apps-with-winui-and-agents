@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Hangar (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Hangar (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
