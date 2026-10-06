@@ -54,6 +54,9 @@ public sealed partial class WorkOrder : ObservableValidator
     public partial string? SignedBy { get; set; }
 
     [ObservableProperty]
+    public partial string? SignaturePath { get; set; }
+
+    [ObservableProperty]
     [NotifyDataErrorInfo]
     [Range(0.1, 500, ErrorMessage = "Hours must be greater than 0")]
     public partial double Hours { get; set; }

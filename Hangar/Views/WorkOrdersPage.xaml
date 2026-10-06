@@ -2,8 +2,636 @@
 <Page
     x:Class="Hangar.Views.WorkOrdersPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Padding="40">
-        <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="WorkOrdersPage" />
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Hangar.Controls"
+    xmlns:helpers="using:Hangar.Helpers"
+    xmlns:models="using:Hangar.Models"
+    xmlns:tabular="using:Microsoft.UI.Xaml.Controls.Tabular"
+    NavigationCacheMode="Required">
+
+    <Page.Resources>
+        <Style x:Key="ChipToggleStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="14,6,14,7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+        <Style x:Key="ToolbarButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="12,6,12,7" />
+            <Setter Property="MinHeight" Value="32" />
+        </Style>
+    </Page.Resources>
+
+    <Grid Padding="40,28,40,32" RowSpacing="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Header  -->
+        <Grid ColumnSpacing="24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="4">
+                <TextBlock
+                    x:Name="EyebrowText"
+                    Style="{StaticResource EyebrowTextStyle}"
+                    Text="MAINTENANCE RECORDS · 2,400 WORK ORDERS" />
+                <TextBlock
+                    AutomationProperties.HeadingLevel="Level1"
+                    Style="{StaticResource HeroTextStyle}"
+                    Text="Paper trail" />
+                <TextBlock
+                    Foreground="{ThemeResource SecondaryTextBrush}"
+                    Style="{StaticResource BodyTextStyle}"
+                    FontSize="16"
+                    Text="Every finding, every fix, every signature. Group, filter and sort the whole fleet history in one view." />
+            </StackPanel>
+
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Orientation="Horizontal"
+                Spacing="28">
+                <StackPanel>
+                    <TextBlock
+                        x:Name="VisibleCountText"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource KpiValueTextStyle}"
+                        Text="2,400" />
+                    <TextBlock
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource EyebrowTextStyle}"
+                        Text="SHOWING" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock
+                        x:Name="OpenCountText"
+                        HorizontalAlignment="Right"
+                        Foreground="{ThemeResource AccentCyanBrush}"
+                        Style="{StaticResource KpiValueTextStyle}"
+                        Text="0" />
+                    <TextBlock
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource EyebrowTextStyle}"
+                        Text="OPEN" />
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock
+                        x:Name="HoursText"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource KpiValueTextStyle}"
+                        Text="0" />
+                    <TextBlock
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource EyebrowTextStyle}"
+                        Text="LABOR HOURS" />
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <!--  Toolbar  -->
+        <Grid Grid.Row="1" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="FilterBox"
+                VerticalAlignment="Center"
+                AutomationProperties.AutomationId="WorkOrdersFilterBox"
+                AutomationProperties.Name="Filter work orders"
+                CornerRadius="16"
+                PlaceholderText="Filter tail, component, WO#, finding, part…"
+                TextChanged="OnFilterTextChanged" />
+
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="8">
+                <ToggleButton
+                    x:Name="FanBladeChip"
+                    AutomationProperties.AutomationId="ChipFanBlade"
+                    AutomationProperties.Name="Filter fan blade work orders"
+                    Click="OnChipClick"
+                    Style="{StaticResource ChipToggleStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xE945;" />
+                        <TextBlock Text="Fan blade" />
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton
+                    x:Name="HeroChip"
+                    AutomationProperties.AutomationId="ChipHeroTail"
+                    AutomationProperties.Name="Filter tail N2207C"
+                    Click="OnChipClick"
+                    Style="{StaticResource ChipToggleStyle}">
+                    <TextBlock FontFamily="{StaticResource MonoFontFamily}" Text="N2207C" />
+                </ToggleButton>
+                <ToggleButton
+                    x:Name="RecentChip"
+                    AutomationProperties.AutomationId="ChipLast12Months"
+                    AutomationProperties.Name="Filter last 12 months"
+                    Click="OnChipClick"
+                    Content="Last 12 months"
+                    Style="{StaticResource ChipToggleStyle}" />
+                <Rectangle
+                    Width="1"
+                    Height="20"
+                    Margin="4,0"
+                    Fill="{ThemeResource SurfaceStrokeBrush}" />
+                <ToggleButton
+                    x:Name="OpenChip"
+                    AutomationProperties.AutomationId="ChipOpen"
+                    AutomationProperties.Name="Filter open"
+                    Click="OnChipClick"
+                    Content="Open"
+                    Style="{StaticResource ChipToggleStyle}" />
+                <ToggleButton
+                    x:Name="InProgressChip"
+                    AutomationProperties.AutomationId="ChipInProgress"
+                    AutomationProperties.Name="Filter in progress"
+                    Click="OnChipClick"
+                    Content="In progress"
+                    Style="{StaticResource ChipToggleStyle}" />
+                <ToggleButton
+                    x:Name="DeferredChip"
+                    AutomationProperties.AutomationId="ChipDeferred"
+                    AutomationProperties.Name="Filter deferred"
+                    Click="OnChipClick"
+                    Content="Deferred"
+                    Style="{StaticResource ChipToggleStyle}" />
+                <ToggleButton
+                    x:Name="ClosedChip"
+                    AutomationProperties.AutomationId="ChipClosed"
+                    AutomationProperties.Name="Filter closed"
+                    Click="OnChipClick"
+                    Content="Closed"
+                    Style="{StaticResource ChipToggleStyle}" />
+                <Button
+                    x:Name="ClearFiltersButton"
+                    AutomationProperties.AutomationId="ClearFiltersButton"
+                    AutomationProperties.Name="Clear all filters"
+                    Click="OnClearFiltersClick"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="12" Glyph="&#xE894;" />
+                        <TextBlock Text="Clear" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <StackPanel
+                Grid.Column="2"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="8">
+                <ToggleButton
+                    x:Name="GroupToggle"
+                    AutomationProperties.AutomationId="GroupByComponentToggle"
+                    AutomationProperties.Name="Group by component"
+                    Click="OnGroupToggleClick"
+                    IsChecked="True"
+                    Style="{StaticResource ChipToggleStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="12" Glyph="&#xF168;" />
+                        <TextBlock Text="Group by component" />
+                    </StackPanel>
+                </ToggleButton>
+                <Button
+                    x:Name="CollapseButton"
+                    AutomationProperties.AutomationId="CollapseGroupsButton"
+                    AutomationProperties.Name="Collapse all groups"
+                    Click="OnCollapseClick"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    ToolTipService.ToolTip="Collapse all groups">
+                    <FontIcon FontSize="12" Glyph="&#xE70E;" />
+                </Button>
+                <Button
+                    x:Name="ExpandButton"
+                    AutomationProperties.AutomationId="ExpandGroupsButton"
+                    AutomationProperties.Name="Expand all groups"
+                    Click="OnExpandClick"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    ToolTipService.ToolTip="Expand all groups">
+                    <FontIcon FontSize="12" Glyph="&#xE70D;" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!--  The table  -->
+        <Border
+            Grid.Row="2"
+            Background="{ThemeResource SurfaceBrush}"
+            BorderBrush="{ThemeResource SurfaceStrokeBrush}"
+            BorderThickness="1"
+            CornerRadius="{StaticResource CardCornerRadius}">
+            <tabular:TableView
+                x:Name="Table"
+                AutomationProperties.AutomationId="WorkOrdersTable"
+                AutomationProperties.Name="Work orders"
+                CanUserResizeColumns="True"
+                CanUserSortColumns="True"
+                CellEditEnding="OnCellEditEnding"
+                Density="Standard"
+                GridLinesVisibility="Horizontal"
+                IsReadOnly="False"
+                SelectionChanged="OnSelectionChanged"
+                SelectionMode="Single">
+
+                <tabular:TableView.GroupHeaderTemplate>
+                    <DataTemplate x:DataType="tabular:TableViewGroupInfo">
+                        <Grid Padding="4,10,16,10" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontFamily="{StaticResource DisplayFontFamily}"
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Text="{x:Bind KeyText, Mode=OneWay}" />
+                            <Border
+                                Grid.Column="1"
+                                Background="{ThemeResource NeutralSoftBrush}"
+                                BorderBrush="{ThemeResource SurfaceStrokeBrush}"
+                                Style="{StaticResource PillBorderStyle}">
+                                <TextBlock
+                                    Foreground="{ThemeResource SecondaryTextBrush}"
+                                    Style="{StaticResource PillTextStyle}"
+                                    Text="{x:Bind ItemCountText, Mode=OneWay}" />
+                            </Border>
+                            <TextBlock
+                                Grid.Column="3"
+                                VerticalAlignment="Center"
+                                Foreground="{ThemeResource AccentCyanBrush}"
+                                Style="{StaticResource PillTextStyle}"
+                                Text="{x:Bind helpers:WorkOrderFormat.GroupOpen(Key), Mode=OneWay}" />
+                            <StackPanel
+                                Grid.Column="4"
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="10">
+                                <Grid Width="160" Height="6">
+                                    <Border Background="{ThemeResource ChartGridBrush}" CornerRadius="3" />
+                                    <Border
+                                        Width="{x:Bind helpers:WorkOrderFormat.GroupBarWidth(Key), Mode=OneWay}"
+                                        HorizontalAlignment="Left"
+                                        Background="{ThemeResource AccentCyanBrush}"
+                                        CornerRadius="3" />
+                                </Grid>
+                                <TextBlock
+                                    Width="64"
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource SecondaryTextBrush}"
+                                    Text="{x:Bind helpers:WorkOrderFormat.GroupHours(Key), Mode=OneWay}"
+                                    TextAlignment="Right" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </tabular:TableView.GroupHeaderTemplate>
+
+                <tabular:TableView.EmptyTemplate>
+                    <DataTemplate>
+                        <StackPanel
+                            Margin="24,64"
+                            HorizontalAlignment="Center"
+                            Spacing="8">
+                            <FontIcon
+                                FontSize="32"
+                                Foreground="{ThemeResource TertiaryTextBrush}"
+                                Glyph="&#xE721;" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Style="{StaticResource SectionTitleTextStyle}"
+                                Text="No work orders match" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource SecondaryTextBrush}"
+                                Style="{StaticResource BodyTextStyle}"
+                                Text="Try clearing a filter chip or the search text." />
+                        </StackPanel>
+                    </DataTemplate>
+                </tabular:TableView.EmptyTemplate>
+
+                <tabular:TableView.Columns>
+                    <tabular:TableViewTemplateColumn
+                        x:Name="NumberColumn"
+                        Width="120"
+                        FrozenEdge="Leading"
+                        Header="WO #"
+                        IsReadOnly="True"
+                        SortMemberPath="Number">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="13"
+                                    Foreground="{ThemeResource AccentCyanBrush}"
+                                    Text="{x:Bind NumberText}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="104"
+                        Header="Tail"
+                        IsReadOnly="True"
+                        SortMemberPath="Tail">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind Tail}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTextColumn
+                        Width="140"
+                        Binding="{Binding Component}"
+                        Header="Component"
+                        IsReadOnly="True" />
+
+                    <tabular:TableViewTemplateColumn
+                        Width="80"
+                        Header="ATA"
+                        IsReadOnly="True"
+                        SortMemberPath="Ata">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="13"
+                                    Foreground="{ThemeResource SecondaryTextBrush}"
+                                    Text="{x:Bind Ata}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="*"
+                        MinWidth="260"
+                        CellToolTipBinding="{Binding Finding}"
+                        Header="Finding"
+                        IsReadOnly="True"
+                        SortMemberPath="Finding">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind Finding, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="190"
+                        Header="Technician"
+                        IsReadOnly="True"
+                        SortMemberPath="Technician">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <StackPanel
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="10">
+                                    <PersonPicture
+                                        Width="28"
+                                        Height="28"
+                                        AutomationProperties.AccessibilityView="Raw"
+                                        DisplayName="{x:Bind Technician}" />
+                                    <TextBlock VerticalAlignment="Center" Text="{x:Bind Technician}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="132"
+                        Header="Status"
+                        IsReadOnly="True"
+                        SortMemberPath="Status">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <controls:StatusPill
+                                    Margin="10,0,0,0" VerticalAlignment="Center" Status="{x:Bind Status, Mode=OneWay}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="130"
+                        Header="Part #"
+                        IsReadOnly="True"
+                        SortMemberPath="PartNumber">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="13"
+                                    Foreground="{ThemeResource SecondaryTextBrush}"
+                                    Text="{x:Bind PartNumber}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        x:Name="OpenedColumn"
+                        Width="124"
+                        Header="Opened"
+                        IsReadOnly="True"
+                        SortMemberPath="Opened">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="13"
+                                    Text="{x:Bind OpenedText}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="96"
+                        Header="Hours"
+                        HeaderToolTip="Labor hours · double-click or F2 to edit"
+                        SortMemberPath="Hours">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <TextBlock
+                                    Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="13"
+                                    Text="{x:Bind helpers:WorkOrderFormat.Hours(Hours), Mode=OneWay}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                        <tabular:TableViewTemplateColumn.CellEditingTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <NumberBox
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.Name="Labor hours"
+                                    LargeChange="1"
+                                    SmallChange="0.5"
+                                    SpinButtonPlacementMode="Hidden"
+                                    Value="{x:Bind Hours, Mode=TwoWay}" />
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellEditingTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="104"
+                        CanSort="False"
+                        Header="Sign-off"
+                        IsReadOnly="True">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <Grid
+                                    Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <Border
+                                        Height="30"
+                                        Padding="6,2"
+                                        HorizontalAlignment="Left"
+                                        Background="{ThemeResource InkSurfaceBrush}"
+                                        BorderBrush="{ThemeResource HealthyBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        ToolTipService.ToolTip="{x:Bind SignedBy, Mode=OneWay}"
+                                        Visibility="{x:Bind helpers:WorkOrderFormat.HasSignature(SignaturePath), Mode=OneWay}">
+                                        <Image
+                                            AutomationProperties.Name="Ink signature"
+                                            Source="{x:Bind helpers:WorkOrderFormat.Signature(SignaturePath), Mode=OneWay}"
+                                            Stretch="Uniform" />
+                                    </Border>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Foreground="{ThemeResource TertiaryTextBrush}"
+                                        Text="{x:Bind SignedBy, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis"
+                                        Visibility="{x:Bind helpers:WorkOrderFormat.NoSignature(SignaturePath), Mode=OneWay}" />
+                                </Grid>
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+
+                    <tabular:TableViewTemplateColumn
+                        Width="64"
+                        CanResize="False"
+                        CanSort="False"
+                        FrozenEdge="Trailing"
+                        Header=""
+                        IsReadOnly="True">
+                        <tabular:TableViewTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:WorkOrder">
+                                <Button
+                                    Width="36"
+                                    Height="32"
+                                    Padding="0"
+                                    HorizontalAlignment="Center"
+                                    AutomationProperties.Name="Show on aircraft"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Click="OnShowOnAircraftClick"
+                                    Tag="{x:Bind}"
+                                    ToolTipService.ToolTip="Show on aircraft"
+                                    Visibility="{x:Bind helpers:WorkOrderFormat.Visible(IsMappable)}">
+                                    <FontIcon
+                                        FontSize="14"
+                                        Foreground="{ThemeResource AccentCyanBrush}"
+                                        Glyph="&#xE709;" />
+                                </Button>
+                            </DataTemplate>
+                        </tabular:TableViewTemplateColumn.CellTemplate>
+                    </tabular:TableViewTemplateColumn>
+                </tabular:TableView.Columns>
+            </tabular:TableView>
+        </Border>
+
+        <!--  Selection detail strip  -->
+        <Grid
+            x:Name="DetailStrip"
+            Grid.Row="3"
+            Padding="20,14"
+            Background="{ThemeResource SurfaceBrush}"
+            BorderBrush="{ThemeResource SurfaceStrokeBrush}"
+            BorderThickness="1"
+            ColumnSpacing="20"
+            CornerRadius="{StaticResource CardCornerRadius}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <FontIcon
+                x:Name="DetailIcon"
+                FontSize="18"
+                Foreground="{ThemeResource SecondaryTextBrush}"
+                Glyph="&#xE8FD;" />
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                <TextBlock
+                    x:Name="DetailTitle"
+                    FontWeight="SemiBold"
+                    Text="Select a work order"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    x:Name="DetailSubtitle"
+                    Foreground="{ThemeResource SecondaryTextBrush}"
+                    Style="{StaticResource BodyTextStyle}"
+                    Text="Double-click Hours to edit inline. Values must be greater than 0."
+                    TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <TextBlock
+                x:Name="ValidationText"
+                Grid.Column="2"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource CriticalBrush}"
+                Visibility="Collapsed" />
+            <Button
+                x:Name="ShowOnAircraftButton"
+                Grid.Column="3"
+                AutomationProperties.AutomationId="ShowOnAircraftButton"
+                AutomationProperties.Name="Show selected work order on aircraft"
+                Click="OnShowSelectedOnAircraftClick"
+                CornerRadius="{StaticResource PillCornerRadius}"
+                IsEnabled="False"
+                Padding="18,10"
+                Style="{StaticResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <FontIcon FontSize="14" Glyph="&#xE709;" />
+                    <TextBlock FontWeight="SemiBold" Text="Show on aircraft" />
+                </StackPanel>
+            </Button>
+        </Grid>
     </Grid>
 </Page>
