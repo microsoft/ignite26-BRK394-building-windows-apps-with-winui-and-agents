@@ -88,6 +88,9 @@ public sealed partial class AircraftStage : UserControl
 
     // Theme cache.
     private Color _cyan, _amber, _green, _canvas, _text, _heatColor;
+
+    // Amber flags attention while collapsed; once exploded the broken part reads as Critical red.
+    private Color FaultColor => Mix(_amber, _heatColor, Math.Clamp(_explode, 0f, 1f));
     private bool _light, _highContrast;
     private Vector2? _hotTip;
 
@@ -520,7 +523,7 @@ public sealed partial class AircraftStage : UserControl
 
                     if (line.Sub >= 0 && line.Sub == _hotSub && !healthy)
                     {
-                        color = line.IsHot ? Mix(_amber, _light ? _heatColor : Colors.White, 0.55f * hotBlink) : _amber;
+                        color = line.IsHot ? Mix(FaultColor, _light ? _heatColor : Colors.White, 0.55f * hotBlink) : FaultColor;
                         alpha = line.IsHot ? 0.55f + 0.45f * hotBlink : 0.7f + 0.3f * hotBlink;
                         width = line.IsHot ? 2.6f : 1.4f + 0.4f * ex;
                     }
@@ -801,14 +804,25 @@ public sealed partial class AircraftStage : UserControl
 
         if (!healthy && _hotTip is Vector2 tip)
         {
+            if (_explode > 0.01f)
+            {
+                using var glow = new CanvasRadialGradientBrush(ds, WithAlpha(_heatColor, 0.45f * _explode), WithAlpha(_heatColor, 0f))
+                {
+                    Center = tip,
+                    RadiusX = 34f,
+                    RadiusY = 34f,
+                };
+                ds.FillCircle(tip, 34f, glow);
+            }
+
             for (var k = 0; k < 2; k++)
             {
                 var t = (float)((now + k * 0.7) % 1.4 / 1.4);
                 var ping = _animationsEnabled ? t : 0.4f;
-                ds.DrawCircle(tip, 4f + 26f * ping, WithAlpha(_amber, (1f - ping) * 0.9f), 1.5f);
+                ds.DrawCircle(tip, 4f + 26f * ping, WithAlpha(FaultColor, (1f - ping) * 0.9f), 1.5f);
             }
 
-            ds.FillCircle(tip, 3f, WithAlpha(_light ? _amber : Colors.White, 0.95f));
+            ds.FillCircle(tip, 3f, WithAlpha(_light ? FaultColor : Colors.White, 0.95f));
         }
 
         if (celebrateT is >= 0f and < 2.6f && project(WireMesh.Engine2Origin + new Vector3(-2f, 0f, 0f), out var e2, out _))
@@ -957,7 +971,7 @@ public sealed partial class AircraftStage : UserControl
 
             _labelRects.Add(rect);
             var hot = slot.Hot && !healthy;
-            var accent = healthy ? _green : hot ? _amber : _cyan;
+            var accent = healthy ? _green : hot ? FaultColor : _cyan;
             var textColor = _light ? _text : slot.Detail is null ? accent : Mix(accent, Colors.White, 0.35f);
             var anchor = up ? slot.Top : slot.Bottom;
             var endY = up ? (float)(rect.Y + rect.Height) + 3f : (float)rect.Y - 3f;
@@ -976,7 +990,7 @@ public sealed partial class AircraftStage : UserControl
 
             if (hot)
             {
-                ds.DrawRoundedRectangle(rect, 3f, 3f, WithAlpha(_amber, 0.55f * a), 0.8f);
+                ds.DrawRoundedRectangle(rect, 3f, 3f, WithAlpha(FaultColor, 0.55f * a), 0.8f);
             }
 
             var titleFormat = slot.Detail is null ? _tagFormat! : _subFormat!;
@@ -1054,7 +1068,7 @@ public sealed partial class AircraftStage : UserControl
             EnginePart.Turbine => ("HP TURBINE", "EGT MARGIN 42 °C · OK"),
             _ => (string.Empty, string.Empty),
         };
-        var accent = flagged && part == EnginePart.Fan ? _amber : healthy ? _green : _cyan;
+        var accent = flagged && part == EnginePart.Fan ? FaultColor : healthy ? _green : _cyan;
         var appear = Math.Clamp(_selectionAge * 3f, 0f, 1f);
         if (_hover != EnginePart.None && _hover != SelectedPart)
         {
