@@ -127,7 +127,7 @@ internal static class StageSpriteScene
         foreach (var group in groups.Where(g => g.Key >= 0).OrderBy(g => g.Key))
         {
             var lines = group.ToArray();
-            if (!TryMakeEngineSlice(compositor, palette, stats, $"e2-{group.Key}", lines, WireMesh.Engine2Origin, 5f, out var visual, out var rest, out var brushes))
+            if (!TryMakeEngineSlice(compositor, palette, stats, $"e2-{group.Key}", lines, WireMesh.Engine2Origin, 5f, true, out var visual, out var rest, out var brushes))
             {
                 continue;
             }
@@ -145,7 +145,7 @@ internal static class StageSpriteScene
     {
         foreach (var group in lines.GroupBy(l => Math.Clamp((int)MathF.Floor((AverageX(l.Points) - (Engine1Origin.X - 5f)) / 1.05f), 0, 5)))
         {
-            if (TryMakeEngineSlice(compositor, palette, stats, $"e1-{group.Key}", group.ToArray(), Engine1Origin, 2.5f, out var visual, out _, out _))
+            if (TryMakeEngineSlice(compositor, palette, stats, $"e1-{group.Key}", group.ToArray(), Engine1Origin, 2.5f, false, out var visual, out _, out _))
             {
                 visual.Opacity = 0.44f;
                 parent.Children.InsertAtTop(visual);
@@ -235,7 +235,7 @@ internal static class StageSpriteScene
     }
 
     private static bool TryMakeEngineSlice(Compositor compositor, StagePalette palette, StageBakeStats stats, string id, WireLine[] source,
-        Vector3 origin, float ppu, out SpriteVisual visual, out Vector3 rest, out (CompositionBrush Normal, CompositionBrush Healthy, CompositionBrush Hot) brushes)
+        Vector3 origin, float ppu, bool variants, out SpriteVisual visual, out Vector3 rest, out (CompositionBrush Normal, CompositionBrush Healthy, CompositionBrush Hot) brushes)
     {
         var converted = source.Select(l => new StageLine2D(l.Points.Select(p => new Vector2((p.Z - origin.Z) * StageMath.K, -(p.Y - origin.Y) * StageMath.K)).ToArray(), l.IsHot)).ToArray();
         var all = converted.SelectMany(l => l.Points).ToArray();
@@ -255,8 +255,8 @@ internal static class StageSpriteScene
         var hot = source.Any(l => l.IsHot);
         var tone = hot ? StageBakeTone.Amber : StageBakeTone.Cyan;
         var normal = StageBaker.BakeWire(compositor, palette, id, local, size, ppu, tone, stats);
-        var healthy = StageBaker.BakeWire(compositor, palette, id + "-healthy", local, size, ppu, StageBakeTone.Healthy, stats);
-        var amber = hot ? normal : StageBaker.BakeWire(compositor, palette, id + "-hot", local, size, ppu, StageBakeTone.Amber, stats);
+        var healthy = variants ? StageBaker.BakeWire(compositor, palette, id + "-healthy", local, size, ppu, StageBakeTone.Healthy, stats) : normal;
+        var amber = hot ? normal : normal;
         visual.Brush = normal.Brush;
         visual.Size = normal.SizeUnits;
         visual.CenterPoint = new Vector3(normal.SizeUnits.X * 0.5f, normal.SizeUnits.Y * 0.5f, 0);
