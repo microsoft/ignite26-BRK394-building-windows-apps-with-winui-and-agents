@@ -459,9 +459,9 @@ public sealed partial class AircraftStage : UserControl
             return true;
         }
 
-        _labelFormat ??= new CanvasTextFormat { FontFamily = "Segoe UI Variable Display", FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
-        _subFormat ??= new CanvasTextFormat { FontFamily = "Cascadia Mono", FontSize = 12 };
-        _tagFormat ??= new CanvasTextFormat { FontFamily = "Cascadia Mono", FontSize = 10.5f };
+        _labelFormat ??= new CanvasTextFormat { FontFamily = "Segoe UI Variable Display",         FontSize = 13, FontWeight = Microsoft.UI.Text.FontWeights.Normal };
+                _subFormat ??= new CanvasTextFormat { FontFamily = "Cascadia Mono", FontSize = 10.5f };
+                _tagFormat ??= new CanvasTextFormat { FontFamily = "Cascadia Mono", FontSize = 9.5f };
 
         var ds = args.DrawingSession;
         var glow = !_light && !_highContrast;
@@ -593,6 +593,7 @@ public sealed partial class AircraftStage : UserControl
                 DrawTrails(lds, Project);
             }
 
+            DrawAirflow(lds, Project, now, healthy, ex);
             DrawEffects(lds, Project, now, healthy, celebrateT);
             _labelRects.Clear();
             var labelsOwnStage = _labelAlpha > 0.5f && SelectedPart == EnginePart.None && _hover == EnginePart.None;
@@ -701,6 +702,85 @@ public sealed partial class AircraftStage : UserControl
             {
                 ds.DrawLine(p1, p2, WithAlpha(_cyan, floorAlpha * 0.6f), 1f);
             }
+        }
+    }
+
+    // Air streaks flowing through both engines (intake → fan → bypass duct / core → nozzle, toward −X).
+    private void DrawAirflow(CanvasDrawingSession ds, Projector project, double now, bool healthy, float ex)
+    {
+        var fade = (1f - ex) * (1f - ex);
+        if (_highContrast || fade < 0.02f)
+        {
+            return;
+        }
+
+        var cool = healthy ? Mix(_cyan, _green, 0.55f) : _cyan;
+        var hot = _light ? cool : Mix(cool, Colors.White, 0.55f);
+        DrawEngineAirflow(ds, project, WireMesh.Engine2Origin, now, cool, hot, 0.55f * fade, 40, 30);
+        DrawEngineAirflow(ds, project, Engine1Origin, now + 3.7, cool, hot, 0.3f * fade, 22, 16);
+    }
+
+    private void DrawEngineAirflow(CanvasDrawingSession ds, Projector project, Vector3 origin, double now, Color cool, Color hot, float alpha, int bypassCount, int coreCount)
+    {
+        static float Hash(int i, int k) => MathF.Abs(MathF.Sin(i * 12.9898f + k * 78.233f) * 43758.547f) % 1f;
+        static float Smooth(float a, float b, float x) { var t = Math.Clamp((x - a) / (b - a), 0f, 1f); return t * t * (3f - 2f * t); }
+
+        // Core annulus outer radius along the axis: squeezes through the compressor, swells through the turbines.
+        static float CoreEnvelope(float dx) => dx switch
+        {
+            > -1.4f => 0.56f,
+            > -2.6f => 0.56f - 0.1f * ((-1.4f - dx) / 1.2f),
+            > -3.0f => 0.48f,
+            > -4.1f => 0.48f + 0.1f * ((-3.0f - dx) / 1.1f),
+            > -4.5f => 0.58f - 0.1f * ((-4.1f - dx) / 0.4f),
+            _ => 0.48f,
+        };
+
+        var time = _animationsEnabled ? (float)now : 0f;
+        for (var i = 0; i < bypassCount + coreCount; i++)
+        {
+            var core = i >= bypassCount;
+            var a0 = Hash(i, 1) * MathF.Tau;
+            var f = Hash(i, 2);
+            var speed = (core ? 0.32f : 0.46f) * (0.85f + 0.3f * Hash(i, 3));
+            var t = (Hash(i, 4) + time * speed) % 1f;
+            var start = 1.6f;
+            var endDx = core ? -5.6f : -3.6f;
+            var dx = start + (endDx - start) * t;
+            var tail = core ? 0.22f : 0.32f;
+
+            Vector3 Point(float d)
+            {
+                // Funnel in from a wider stream ahead of the inlet.
+                var funnel = 1f + 0.22f * Smooth(0f, 1.6f, d);
+                float r;
+                float swirl;
+                if (core)
+                {
+                    r = (0.2f + f * (CoreEnvelope(d) - 0.22f)) * funnel;
+                    swirl = 0.18f * Math.Clamp(-d, 0f, 4.5f);
+                }
+                else
+                {
+                    r = (0.68f + f * 0.34f) * funnel;
+                    swirl = 0.06f * Math.Clamp(-d, 0f, 1.4f);
+                }
+
+                var ang = a0 + swirl;
+                return new Vector3(origin.X + d, origin.Y + r * MathF.Cos(ang), origin.Z + r * MathF.Sin(ang));
+            }
+
+            if (!project(Point(dx), out var head, out _) || !project(Point(dx + tail), out var back, out _))
+            {
+                continue;
+            }
+
+            var life = MathF.Sin(MathF.PI * t);
+            var heat = core ? Smooth(-2.6f, -3.2f, dx) : 0f;
+            var color = Mix(cool, hot, heat);
+            var a = alpha * life * (core ? 0.9f : 0.7f);
+            ds.DrawLine(back, head, WithAlpha(color, a * 0.35f), core ? 2.6f : 2.2f);
+            ds.DrawLine(back, head, WithAlpha(color, a), core ? 1.1f : 0.9f);
         }
     }
 
@@ -883,28 +963,30 @@ public sealed partial class AircraftStage : UserControl
             var endY = up ? (float)(rect.Y + rect.Height) + 3f : (float)rect.Y - 3f;
             var cx = (float)(rect.X + rect.Width / 2);
             var elbow = new Vector2(anchor.X, anchor.Y + (endY - anchor.Y) * a);
-            ds.FillCircle(anchor, 2.4f, WithAlpha(accent, 0.95f * a));
-            ds.DrawLine(anchor, elbow, WithAlpha(accent, 0.6f * a), 1f);
-            ds.DrawLine(Math.Min(anchor.X, cx - 6f), endY, Math.Max(anchor.X, cx + 6f), endY, WithAlpha(accent, 0.85f * a), 1f);
+            // Subtle by default; HighContrast keeps full strength.
+            var tone = _highContrast ? 1f : hot ? 0.85f : 0.62f;
+            ds.FillCircle(anchor, 1.8f, WithAlpha(accent, 0.8f * tone * a));
+            ds.DrawLine(anchor, elbow, WithAlpha(accent, 0.55f * tone * a), 0.8f);
+            ds.DrawLine(Math.Min(anchor.X, cx - 5f), endY, Math.Max(anchor.X, cx + 5f), endY, WithAlpha(accent, 0.7f * tone * a), 0.8f);
 
             if (!_highContrast)
             {
-                ds.FillRoundedRectangle(rect, 3f, 3f, WithAlpha(_canvas, 0.78f * a));
+                ds.FillRoundedRectangle(rect, 3f, 3f, WithAlpha(_canvas, 0.55f * a));
             }
 
             if (hot)
             {
-                ds.DrawRoundedRectangle(rect, 3f, 3f, WithAlpha(_amber, 0.75f * a), 1f);
+                ds.DrawRoundedRectangle(rect, 3f, 3f, WithAlpha(_amber, 0.55f * a), 0.8f);
             }
 
             var titleFormat = slot.Detail is null ? _tagFormat! : _subFormat!;
             titleFormat.HorizontalAlignment = CanvasHorizontalAlignment.Center;
-            ds.DrawText(slot.Title, (float)rect.X, (float)rect.Y + 1f, (float)rect.Width, 17f, WithAlpha(textColor, 0.95f * a), titleFormat);
+            ds.DrawText(slot.Title, (float)rect.X, (float)rect.Y + 1f, (float)rect.Width, 15f, WithAlpha(textColor, 0.85f * tone * a), titleFormat);
             titleFormat.HorizontalAlignment = CanvasHorizontalAlignment.Left;
             if (slot.Detail is not null)
             {
                 _tagFormat!.HorizontalAlignment = CanvasHorizontalAlignment.Center;
-                ds.DrawText(slot.Detail, (float)rect.X, (float)rect.Y + 18f, (float)rect.Width, 15f, WithAlpha(_light ? _text : accent, 0.8f * a), _tagFormat);
+                ds.DrawText(slot.Detail, (float)rect.X, (float)rect.Y + 15f, (float)rect.Width, 13f, WithAlpha(_light ? _text : accent, 0.65f * tone * a), _tagFormat);
                 _tagFormat.HorizontalAlignment = CanvasHorizontalAlignment.Left;
             }
         }
@@ -912,8 +994,8 @@ public sealed partial class AircraftStage : UserControl
 
     private bool TryPlaceLabel(LabelSlot slot, bool preferUp, out Rect rect, out bool up)
     {
-        var width = Math.Max(slot.Title.Length * (slot.Detail is null ? 6.6f : 7.4f), (slot.Detail?.Length ?? 0) * 6.6f) + 16f;
-        var height = slot.Detail is null ? 18f : 34f;
+        var width = Math.Max(slot.Title.Length * (slot.Detail is null ? 6f : 6.5f), (slot.Detail?.Length ?? 0) * 6f) + 12f;
+        var height = slot.Detail is null ? 16f : 29f;
         Rect? fallback = null;
         var fallbackUp = preferUp;
         for (var pass = 0; pass < 2; pass++)
@@ -982,19 +1064,19 @@ public sealed partial class AircraftStage : UserControl
         var flip = anchor.X + 300 > _safe.X + _safe.Width;
         var dir = flip ? -1f : 1f;
         var elbow = anchor + new Vector2(70f * dir, -80f);
-        var end = elbow + new Vector2(200f * dir * appear, 0f);
-        var lineColor = WithAlpha(accent, 0.95f * appear);
+        var end = elbow + new Vector2(180f * dir * appear, 0f);
+        var lineColor = WithAlpha(accent, (_highContrast ? 0.95f : 0.75f) * appear);
 
         var pulse = _animationsEnabled ? 0.5f + 0.5f * MathF.Sin((float)now * 5f) : 1f;
-        ds.DrawCircle(anchor, 6f + 3f * pulse, lineColor, 1.5f);
-        ds.FillCircle(anchor, 2.5f, lineColor);
-        ds.DrawLine(anchor, elbow, lineColor, 1.3f);
-        ds.DrawLine(elbow, end, lineColor, 1.3f);
+        ds.DrawCircle(anchor, 6f + 3f * pulse, lineColor, 1.2f);
+        ds.FillCircle(anchor, 2.2f, lineColor);
+        ds.DrawLine(anchor, elbow, lineColor, 1f);
+        ds.DrawLine(elbow, end, lineColor, 1f);
 
         var textX = flip ? end.X : elbow.X;
         _labelFormat!.HorizontalAlignment = CanvasHorizontalAlignment.Left;
-        ds.DrawText(title, textX + 2f, elbow.Y - 26f, WithAlpha(_light ? _text : Mix(accent, Colors.White, 0.35f), appear), _labelFormat);
-        ds.DrawText(detail, textX + 2f, elbow.Y + 6f, WithAlpha(_light ? _text : accent, 0.9f * appear), _subFormat!);
+        ds.DrawText(title, textX + 2f, elbow.Y - 22f, WithAlpha(_light ? _text : Mix(accent, Colors.White, 0.3f), (_highContrast ? 1f : 0.88f) * appear), _labelFormat);
+        ds.DrawText(detail, textX + 2f, elbow.Y + 5f, WithAlpha(_light ? _text : accent, (_highContrast ? 0.9f : 0.7f) * appear), _subFormat!);
     }
 
     private void DrawScanlines(CanvasDrawingSession ds, float w, float h)
