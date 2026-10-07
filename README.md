@@ -25,7 +25,6 @@ Other screenshots in [`docs/screenshots`](docs/screenshots):
 | **Shell** | <ul><li>Mica Alt backdrop and an extended title bar with search (Ctrl+K) and a live departure-countdown chip</li><li>NavigationView in LeftCompact mode</li><li>Dark-first, with full Light and HighContrast dictionaries</li><li>`SystemAccentColor` is overridden to Runway Cyan `#3AD1F0`; Safety Amber `#FFB020` is reserved for attention states</li></ul> |
 | **Fleet** | <ul><li>4 KPI cards with sparklines</li><li>Hero 30-day availability **area Chart** with a dashed target line</li><li>ItemsRepeater grid of 42 aircraft, where CA 2207 breathes amber</li><li>Connected animation from a tile to the Aircraft page</li></ul> |
 | **Aircraft** | <ul><li>Canvas-style hero layout with a **Tron-style holographic wireframe A321neo** (Win2D)</li><li>Drag to orbit, wheel to zoom, idle auto-rotate</li><li>**Tap Engine 2** (or press **Explode**) to fly the camera to a 3/4 technical-illustration view. Engine 2 then bursts into 50+ LEAP-1A parts: spinner, 22 fan blades, OGVs, booster, HPC stages, combustor, HPT/LPT stages, N1/N2 shafts, clamshell thrust reversers, exhaust and gearbox. The burst uses a staggered spring cascade with motion trails and an energy pulse; collapsing reverses the cascade</li><li>Once settled, the exploded view shows module-level callouts. Only fan blade 14 stays amber; the rest of the aircraft fades back. Tap empty space or press Esc to collapse</li><li>Chips (Nacelle, Fan, Compressor, Turbine) isolate a module, fly the camera to it and switch to per-part labels with a finding callout</li><li>Glass side panels hold vitals and an Engine 2 N1 vibration **line Chart** with a fleet-average band, a limit line and an amber spike, plus a flight scrubber</li></ul> |
-| **Aircraft · Composition** | <ul><li>The same page and Engine 2 story, but the stage is built from **pure `Microsoft.UI.Composition` visuals** (no Win2D, no SceneVisual) so it can be compared side by side with the Win2D hologram</li><li>Engine 2 is a stack of ~1,000 3D-positioned `ShapeVisual` slices (spinner, 22 blades with blade 14 amber, OGVs, booster/HPC/combustor/HPT/LPT disks, shafts, cowls, clamshells). Each slice has a wide low-opacity glow stroke and a crisp core stroke. The airframe is built from rib rings and stringers</li><li>The stage root carries a perspective `TransformMatrix` (M34 = -1/focal). Orbit and zoom rebuild that matrix, and children are re-sorted back-to-front because Composition has no depth buffer</li><li>Explode is scheduled in a single frame: spring and keyframe animations use `DelayTime` taken from `WireMesh.SubParts`, plus a Warp-style pulse ring. Labels and leader lines live in a XAML overlay positioned with the same projection math</li></ul> |
 | **Work Orders** | <ul><li>First-party **TableView** with 2,400 seeded rows</li><li>Grouped by component, with templated group headers showing open count, a progress bar and hours</li><li>Filter chips, sortable headers, status pills, PersonPicture technicians and Cascadia Mono part numbers</li><li>Inline Hours editing with validation (> 0)</li><li>A **Show on aircraft** action</li></ul> |
 | **Inspections** | <ul><li>Full-bleed procedural borescope image with **InkCanvas + InkToolbar** (pen, highlighter, eraser, ruler)</li><li>Strokes can be saved and restored</li><li>Signing the ink signature pad and choosing **Sign & release** adds or updates WO 2207-014, flips CA 2207 to green across the app, and plays one celebratory composition moment</li></ul> |
 
@@ -33,17 +32,16 @@ Other screenshots in [`docs/screenshots`](docs/screenshots):
 
 - **.NET 10**, `net10.0-windows10.0.26100.0`, packaged (MSIX), MVVM with **CommunityToolkit.Mvvm**
 - **Microsoft.WindowsAppSDK 2.5.4-experimental**, which provides the first-party `TableView`, `Chart` (line/area/bar) and `InkCanvas`/`InkToolbar`
-- **Microsoft.Graphics.Win2D 1.4.0** for the hologram renderer (Aircraft page); **Microsoft.UI.Composition** visuals hosted via ElementCompositionPreview.SetElementChildVisual for the Composition stage (Aircraft · Composition page)
+- **Microsoft.Graphics.Win2D 1.4.0** for the hologram renderer (Aircraft page)
 - Local deterministic seeded data (`Services/`), with no network access
 - The window is sized for **2560×1600 @ 150%**
 
 ```
 Hangar/
-  Views/        Fleet, Aircraft, Aircraft · Composition, WorkOrders, Inspections pages
+  Views/        Fleet, Aircraft, WorkOrders, Inspections pages
   ViewModels/   CommunityToolkit.Mvvm view models
   Services/     FleetService (seeded data, demo state, reset)
-  Controls/     IAircraftStage (shared page-to-stage API), AircraftStage (Win2D hologram),
-                CompositionStage/ (Composition visuals: SceneBuilder, Choreography, Math, Palette),
+  Controls/     AircraftStage (Win2D hologram),
                 KPI/sparkline controls
   Helpers/      WireMesh (procedural wireframe), ThemeRes, converters
   Themes/       Semantic brushes: Dark (Default) / Light / HighContrast

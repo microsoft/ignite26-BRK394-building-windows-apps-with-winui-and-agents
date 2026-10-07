@@ -203,14 +203,6 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
-                    AutomationProperties.AutomationId="NavCompositionAircraft"
-                    Content="Aircraft · Composition"
-                    Tag="CompositionAircraft">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE81E;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
-                <NavigationViewItem
                     x:Name="NavWorkOrdersItem"
                     AutomationProperties.AutomationId="NavWorkOrders"
                     Content="Work Orders"
