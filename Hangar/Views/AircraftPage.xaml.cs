@@ -107,6 +107,7 @@ public sealed partial class AircraftPage : Page
     {
         Stage.SetStatus(Data.Hero.Status);
         RenderStatus();
+        RenderPart(Stage.SelectedPart);
         if (Data.Hero.Status == AircraftStatus.Healthy)
         {
             Stage.Celebrate();
@@ -260,7 +261,34 @@ public sealed partial class AircraftPage : Page
         PartEyebrow.Text = part == EnginePart.None ? "SELECTED PART" : "SELECTED PART · ENGINE 2";
         PartTitle.Foreground = ThemeRes.Brush(this, part == EnginePart.None ? "PrimaryTextBrush" : "AccentCyanBrush");
         WorkOrdersButtonText.Text = part == EnginePart.None ? "Engine 2 work orders" : $"{ComponentFor(part)} work orders";
+        BorescopeButton.Visibility = part == EnginePart.Fan && Data.Hero.Status != AircraftStatus.Healthy ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    private void OnBorescopeClick(object sender, RoutedEventArgs e)
+    {
+        if (!Stage.IsExploded)
+        {
+            ExplodeAndSelect(EnginePart.Fan);
+        }
+
+        Stage.DiveToFault();
+    }
+
+    private void OnStageFaultInvoked(object? sender, EventArgs e)
+    {
+        if (Stage.SelectedPart != EnginePart.Fan)
+        {
+            Stage.Select(EnginePart.Fan);
+        }
+
+        Stage.DiveToFault();
+    }
+
+    private void OnStageDiveCompleted(object? sender, EventArgs e) =>
+        NavigationService.Navigate(
+            typeof(InspectionsPage),
+            new InspectionNavigationArgs(Data.Hero.Tail, "Fan blade 14 · leading-edge nick"),
+            new DrillInNavigationTransitionInfo());
 
     private static string ComponentFor(EnginePart part) => part switch
     {

@@ -175,40 +175,59 @@
             x:Name="NavView"
             Grid.Row="1"
             AutomationProperties.AutomationId="MainNavigation"
+            HighContrastAdjustment="None"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
             IsSettingsVisible="False"
             IsTitleBarAutoPaddingEnabled="False"
-            PaneDisplayMode="LeftCompact"
-            SelectionChanged="OnNavSelectionChanged">
-            <NavigationView.Resources>
-                <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
-                <Thickness x:Key="NavigationViewContentGridBorderThickness">0</Thickness>
-            </NavigationView.Resources>
+            PaneDisplayMode="Left"
+            SelectionChanged="OnNavSelectionChanged"
+            Style="{StaticResource MainNavigationViewStyle}">
             <NavigationView.MenuItems>
                 <NavigationViewItem
                     AutomationProperties.AutomationId="NavFleet"
                     Content="Fleet"
+                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
                     Tag="Fleet">
-                    <NavigationViewItem.Icon>
+                    <helpers:NavItemIconHelper.UnselectedIcon>
                         <FontIcon Glyph="&#xE709;" />
+                    </helpers:NavItemIconHelper.UnselectedIcon>
+                    <helpers:NavItemIconHelper.SelectedIcon>
+                        <FontIcon Glyph="&#xE709;" />
+                    </helpers:NavItemIconHelper.SelectedIcon>
+                    <NavigationViewItem.Icon>
+                        <FontIcon Opacity="0" Glyph="&#xE709;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
                     AutomationProperties.AutomationId="NavAircraft"
                     Content="Aircraft"
+                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
                     Tag="Aircraft">
-                    <NavigationViewItem.Icon>
+                    <helpers:NavItemIconHelper.UnselectedIcon>
                         <FontIcon Glyph="&#xF158;" />
+                    </helpers:NavItemIconHelper.UnselectedIcon>
+                    <helpers:NavItemIconHelper.SelectedIcon>
+                        <FontIcon Glyph="&#xF158;" />
+                    </helpers:NavItemIconHelper.SelectedIcon>
+                    <NavigationViewItem.Icon>
+                        <FontIcon Opacity="0" Glyph="&#xF158;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
                     x:Name="NavWorkOrdersItem"
                     AutomationProperties.AutomationId="NavWorkOrders"
                     Content="Work Orders"
+                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
                     Tag="WorkOrders">
-                    <NavigationViewItem.Icon>
+                    <helpers:NavItemIconHelper.UnselectedIcon>
                         <FontIcon Glyph="&#xE9F9;" />
+                    </helpers:NavItemIconHelper.UnselectedIcon>
+                    <helpers:NavItemIconHelper.SelectedIcon>
+                        <FontIcon Glyph="&#xE9F9;" />
+                    </helpers:NavItemIconHelper.SelectedIcon>
+                    <NavigationViewItem.Icon>
+                        <FontIcon Opacity="0" Glyph="&#xE9F9;" />
                     </NavigationViewItem.Icon>
                     <NavigationViewItem.InfoBadge>
                         <InfoBadge x:Name="WorkOrderBadge" Visibility="Collapsed" />
@@ -217,9 +236,16 @@
                 <NavigationViewItem
                     AutomationProperties.AutomationId="NavInspections"
                     Content="Inspections"
+                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
                     Tag="Inspections">
-                    <NavigationViewItem.Icon>
+                    <helpers:NavItemIconHelper.UnselectedIcon>
                         <FontIcon Glyph="&#xEDC6;" />
+                    </helpers:NavItemIconHelper.UnselectedIcon>
+                    <helpers:NavItemIconHelper.SelectedIcon>
+                        <FontIcon Glyph="&#xEDC6;" />
+                    </helpers:NavItemIconHelper.SelectedIcon>
+                    <NavigationViewItem.Icon>
+                        <FontIcon Opacity="0" Glyph="&#xEDC6;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>

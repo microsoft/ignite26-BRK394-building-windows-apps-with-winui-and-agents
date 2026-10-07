@@ -8,6 +8,9 @@ public sealed record AircraftNavigationArgs(string Tail, EnginePart Part = Engin
 
 public sealed record WorkOrdersNavigationArgs(string? Query);
 
+/// <summary>Arriving at Inspections from the hologram: the fault the stage was highlighting.</summary>
+public sealed record InspectionNavigationArgs(string Tail, string Finding);
+
 public static class NavigationService
 {
     private static Frame? _frame;

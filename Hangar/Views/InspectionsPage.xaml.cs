@@ -23,8 +23,17 @@ public sealed partial class InspectionsPage : Page
     private const string Technician = "Maya Okafor";
     private const string Finding = "Fan blade 14 leading-edge nick · 0.4 mm · within limits (AMM 72-21-00)";
     private const string AnnotationFile = "inspection-N2207C.isf";
+    // Borescope frame coordinate of the leading-edge nick in Assets/Inspection/borescope.png.
+    private const double NickU = 0.55;
+    private const double NickV = 0.45;
+    private const double FaultReticleSize = 96;
 
     private bool _inkConfigured;
+    private bool _pendingArrivalAnimation;
+    private string? _hologramTail;
+    private Storyboard? _arrivalStoryboard;
+    private int _scopeImagePixelWidth;
+    private int _scopeImagePixelHeight;
 
     public InspectionsPage()
     {
@@ -47,8 +56,26 @@ public sealed partial class InspectionsPage : Page
         base.OnNavigatedTo(e);
         if (e.Parameter is "reset")
         {
+            _hologramTail = null;
+            _pendingArrivalAnimation = false;
             ResetState();
+            UpdateHologramBreadcrumb();
+            SetFinalHandoffVisuals();
+            return;
         }
+
+        if (e.Parameter is InspectionNavigationArgs args)
+        {
+            _hologramTail = args.Tail;
+            _pendingArrivalAnimation = true;
+        }
+        else
+        {
+            _hologramTail = null;
+            _pendingArrivalAnimation = false;
+        }
+
+        DispatcherQueue.TryEnqueue(RefreshNavigationState);
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -63,6 +90,12 @@ public sealed partial class InspectionsPage : Page
         }
 
         RenderStatus();
+        UpdateHologramBreadcrumb();
+        UpdateFaultGuidePosition();
+        if (_pendingArrivalAnimation)
+        {
+            PlayArrivalFromHologram();
+        }
 #if DEBUG
         if (DebugAutoSign)
         {
@@ -168,6 +201,7 @@ public sealed partial class InspectionsPage : Page
             : "Releases CA 2207 for the 05:52 departure";
         ReleaseNote.Foreground = ThemeRes.Brush(this, released ? "HealthyBrush" : "TertiaryTextBrush");
         ReleasedBanner.Opacity = released ? 1 : 0;
+        UpdateFaultGuideVisibility();
     }
 
     private bool HasSignature => SignatureInk.InkPresenter.StrokeContainer.GetStrokes().Count > 0;
@@ -186,6 +220,7 @@ public sealed partial class InspectionsPage : Page
         SignatureInk.Visibility = Visibility.Visible;
         BurstRing.Opacity = 0;
         BurstRing2.Opacity = 0;
+        SetFinalHandoffVisuals();
         UpdateSignatureState();
         RenderStatus();
         if (_inkConfigured)
@@ -293,6 +328,198 @@ public sealed partial class InspectionsPage : Page
 
         RenderStatus();
         Celebrate();
+    }
+
+    private void RefreshNavigationState()
+    {
+        UpdateHologramBreadcrumb();
+        RenderStatus();
+        UpdateFaultGuidePosition();
+        if (_pendingArrivalAnimation)
+        {
+            PlayArrivalFromHologram();
+        }
+        else
+        {
+            SetFinalHandoffVisuals();
+        }
+    }
+
+    private void UpdateHologramBreadcrumb()
+    {
+        BackToHologramButton.Visibility = _hologramTail is not null ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnBackToHologram(object sender, RoutedEventArgs e)
+    {
+        var tail = string.IsNullOrWhiteSpace(_hologramTail) ? Data.Hero.Tail : _hologramTail;
+        NavigationService.Navigate(
+            typeof(AircraftPage),
+            new AircraftNavigationArgs(tail, EnginePart.Fan),
+            new DrillInNavigationTransitionInfo());
+    }
+
+    private void OnScopeImageOpened(object sender, RoutedEventArgs e)
+    {
+        if (ScopeImage.Source is BitmapSource bitmap)
+        {
+            _scopeImagePixelWidth = bitmap.PixelWidth;
+            _scopeImagePixelHeight = bitmap.PixelHeight;
+        }
+
+        UpdateFaultGuidePosition();
+    }
+
+    private void OnScopeHostSizeChanged(object sender, SizeChangedEventArgs e) => UpdateFaultGuidePosition();
+
+    private void OnRootSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        SignOffColumn.Width = new GridLength(e.NewSize.Width < 1200 ? 340 : 380);
+    }
+
+    private void UpdateFaultGuideVisibility()
+    {
+        var visible = !IsReleased;
+        FaultReticle.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        if (!visible)
+        {
+            FaultReticle.Opacity = 0;
+        }
+        else if (!_pendingArrivalAnimation && _arrivalStoryboard is null)
+        {
+            FaultReticle.Opacity = 0.6;
+            FaultReticleScale.ScaleX = 1;
+            FaultReticleScale.ScaleY = 1;
+        }
+    }
+
+    private void UpdateFaultGuidePosition()
+    {
+        var viewportWidth = ScopeHost.ActualWidth;
+        var viewportHeight = ScopeHost.ActualHeight;
+        if (viewportWidth <= 0 || viewportHeight <= 0)
+        {
+            return;
+        }
+
+        var imageWidth = _scopeImagePixelWidth > 0 ? _scopeImagePixelWidth : viewportWidth;
+        var imageHeight = _scopeImagePixelHeight > 0 ? _scopeImagePixelHeight : viewportHeight;
+        var scale = Math.Max(viewportWidth / imageWidth, viewportHeight / imageHeight);
+        var drawnWidth = imageWidth * scale;
+        var drawnHeight = imageHeight * scale;
+        var drawnLeft = (viewportWidth - drawnWidth) / 2;
+        var drawnTop = (viewportHeight - drawnHeight) / 2;
+
+        var x = drawnLeft + drawnWidth * NickU;
+        var y = drawnTop + drawnHeight * NickV;
+        Canvas.SetLeft(FaultReticle, x - FaultReticleSize / 2);
+        Canvas.SetTop(FaultReticle, y - FaultReticleSize / 2);
+    }
+
+    private void PlayArrivalFromHologram()
+    {
+        _pendingArrivalAnimation = false;
+        _arrivalStoryboard?.Stop();
+        _arrivalStoryboard = null;
+        UpdateFaultGuidePosition();
+
+        if (!AnimationsEnabled())
+        {
+            SetFinalHandoffVisuals();
+            return;
+        }
+
+        ScopeImageTransform.ScaleX = 1.12;
+        ScopeImageTransform.ScaleY = 1.12;
+        ScopeImage.Opacity = 0.72;
+        FaultReticle.Visibility = IsReleased ? Visibility.Collapsed : Visibility.Visible;
+        FaultReticle.Opacity = IsReleased ? 0 : 0;
+        FaultReticleScale.ScaleX = 3;
+        FaultReticleScale.ScaleY = 3;
+
+        var story = new Storyboard();
+        AddDouble(story, ScopeImageTransform, "ScaleX", 1.12, 1, 700, 0);
+        AddDouble(story, ScopeImageTransform, "ScaleY", 1.12, 1, 700, 0);
+        AddDouble(story, ScopeImage, "Opacity", 0.72, 1, 620, 0);
+        AddFaultScale(story, "ScaleX");
+        AddFaultScale(story, "ScaleY");
+
+        var fade = new DoubleAnimationUsingKeyFrames();
+        fade.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 0 });
+        fade.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(180), Value = 1 });
+        fade.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(920), Value = 0.56 });
+        fade.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(1180), Value = 0.86 });
+        fade.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(1460), Value = 0.58 });
+        fade.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(1740), Value = 0.78 });
+        fade.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(2100), Value = 0.6 });
+        Storyboard.SetTarget(fade, FaultReticle);
+        Storyboard.SetTargetProperty(fade, "Opacity");
+        story.Children.Add(fade);
+
+        story.Completed += (_, _) =>
+        {
+            _arrivalStoryboard = null;
+            SetFinalHandoffVisuals();
+        };
+        _arrivalStoryboard = story;
+        story.Begin();
+    }
+
+    private void SetFinalHandoffVisuals()
+    {
+        ScopeImageTransform.ScaleX = 1;
+        ScopeImageTransform.ScaleY = 1;
+        ScopeImage.Opacity = 1;
+        FaultReticleScale.ScaleX = 1;
+        FaultReticleScale.ScaleY = 1;
+        FaultReticle.Visibility = IsReleased ? Visibility.Collapsed : Visibility.Visible;
+        FaultReticle.Opacity = IsReleased ? 0 : 0.6;
+        UpdateFaultGuidePosition();
+    }
+
+    private static bool AnimationsEnabled()
+    {
+        try
+        {
+            return new Windows.UI.ViewManagement.UISettings().AnimationsEnabled;
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private static void AddDouble(Storyboard story, DependencyObject target, string property, double from, double to, int durationMs, int delayMs)
+    {
+        var animation = new DoubleAnimation
+        {
+            From = from,
+            To = to,
+            BeginTime = TimeSpan.FromMilliseconds(delayMs),
+            Duration = TimeSpan.FromMilliseconds(durationMs),
+            EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 5 },
+        };
+        Storyboard.SetTarget(animation, target);
+        Storyboard.SetTargetProperty(animation, property);
+        story.Children.Add(animation);
+    }
+
+    private void AddFaultScale(Storyboard story, string property)
+    {
+        var easeOut = new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 5 };
+        var pulseEase = new SineEase { EasingMode = EasingMode.EaseInOut };
+        var scale = new DoubleAnimationUsingKeyFrames();
+        scale.KeyFrames.Add(new DiscreteDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 3 });
+        scale.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(560), Value = 0.9, EasingFunction = easeOut });
+        scale.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(740), Value = 1.04, EasingFunction = pulseEase });
+        scale.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(920), Value = 1, EasingFunction = pulseEase });
+        scale.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(1180), Value = 1.08, EasingFunction = pulseEase });
+        scale.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(1460), Value = 1, EasingFunction = pulseEase });
+        scale.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(1740), Value = 1.06, EasingFunction = pulseEase });
+        scale.KeyFrames.Add(new EasingDoubleKeyFrame { KeyTime = TimeSpan.FromMilliseconds(2100), Value = 1, EasingFunction = pulseEase });
+        Storyboard.SetTarget(scale, FaultReticleScale);
+        Storyboard.SetTargetProperty(scale, property);
+        story.Children.Add(scale);
     }
 
     /// <summary>

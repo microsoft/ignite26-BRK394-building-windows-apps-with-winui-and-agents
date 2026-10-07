@@ -28,6 +28,8 @@
             x:Name="Stage"
             FocusPadding="380,150,480,120"
             ExplodedChanged="OnStageExplodedChanged"
+            FaultInvoked="OnStageFaultInvoked"
+            DiveCompleted="OnStageDiveCompleted"
             PartSelected="OnStagePartSelected" />
 
         <Grid Padding="40,28,40,28" ColumnSpacing="24" RowSpacing="20">
@@ -221,6 +223,22 @@
                             Style="{StaticResource BodyTextStyle}"
                             Text="Explode Engine 2 to separate the nacelle, fan, compressor and turbine."
                             TextWrapping="WrapWholeWords" />
+                        <Button
+                            x:Name="BorescopeButton"
+                            Margin="0,8,0,0"
+                            Padding="16,10"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.AutomationId="AircraftBorescopeButton"
+                            AutomationProperties.Name="Open borescope inspection for fan blade 14"
+                            Click="OnBorescopeClick"
+                            CornerRadius="{StaticResource PillCornerRadius}"
+                            Style="{StaticResource AccentButtonStyle}"
+                            Visibility="Collapsed">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon FontSize="14" Glyph="&#xE890;" />
+                                <TextBlock Text="Borescope blade 14" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>

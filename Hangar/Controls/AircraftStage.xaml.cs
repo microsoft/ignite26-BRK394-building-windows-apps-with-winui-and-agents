@@ -93,6 +93,12 @@ public sealed partial class AircraftStage : UserControl
     private Color FaultColor => Mix(_amber, _heatColor, Math.Clamp(_explode, 0f, 1f));
     private bool _light, _highContrast;
     private Vector2? _hotTip;
+    private Vector3 _hotTipWorld;
+
+    // Dive into the faulty blade tip (hologram → borescope handoff).
+    private const float DiveDuration = 0.85f;
+    private double _diveStart = -1;
+    private bool _diveFired;
 
     private CanvasRenderTarget? _target2D;
     private CanvasTextFormat? _labelFormat, _subFormat, _tagFormat;
@@ -162,6 +168,33 @@ public sealed partial class AircraftStage : UserControl
     public event EventHandler<EnginePart>? PartSelected;
 
     public event EventHandler<bool>? ExplodedChanged;
+
+    /// <summary>The user tapped (or pressed Enter on) the flagged blade tip in the exploded view.</summary>
+    public event EventHandler? FaultInvoked;
+
+    /// <summary>Raised once the camera has finished diving into the faulty blade.</summary>
+    public event EventHandler? DiveCompleted;
+
+    /// <summary>Fly the camera into the red blade tip and flash, then raise <see cref="DiveCompleted"/>.</summary>
+    public void DiveToFault()
+    {
+        if (_diveStart >= 0)
+        {
+            return;
+        }
+
+        if (!_animationsEnabled || _hotTip is null)
+        {
+            DiveCompleted?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
+        _diveStart = _clock.Elapsed.TotalSeconds;
+        _diveFired = false;
+        _lastInteraction = _diveStart;
+    }
+
+    private float DiveProgress => _diveStart < 0 ? 0f : Math.Clamp((float)(_clock.Elapsed.TotalSeconds - _diveStart) / DiveDuration, 0f, 1f);
 
     public bool IsExploded { get; private set; }
 
@@ -248,6 +281,7 @@ public sealed partial class AircraftStage : UserControl
 
     public void ResetView()
     {
+        _diveStart = -1;
         _engineFocus = false;
         Select(EnginePart.None);
         _goalYaw = NearestAngle(DefaultYaw);
@@ -410,6 +444,27 @@ public sealed partial class AircraftStage : UserControl
         _pitch += (_goalPitch - _pitch) * k;
         _distance += (_goalDistance - _distance) * k;
         var goalTarget = SelectedPart != EnginePart.None ? PartCenter(SelectedPart) : _engineFocus ? EngineCenter : DefaultTarget;
+        if (_diveStart >= 0 && now - _diveStart > DiveDuration + 0.4)
+        {
+            // Back from the borescope: let the camera pull out of the blade naturally.
+            _diveStart = -1;
+        }
+
+        if (_diveStart >= 0)
+        {
+            // Accelerating push into the blade tip; the flash overlay covers the last stretch.
+            var d = DiveProgress;
+            var ease = d * d * d;
+            goalTarget = _hotTipWorld;
+            _target = Vector3.Lerp(_target, goalTarget, Math.Min(1f, dt * 9f));
+            _distance = MathF.Max(0.9f, _goalDistance * (1f - 0.93f * ease));
+            if (d >= 1f && !_diveFired)
+            {
+                _diveFired = true;
+                DispatcherQueue.TryEnqueue(() => DiveCompleted?.Invoke(this, EventArgs.Empty));
+            }
+        }
+
         _target = Vector3.Lerp(_target, goalTarget, k);
 
         if (_animationsEnabled)
@@ -584,6 +639,7 @@ public sealed partial class AircraftStage : UserControl
                     if (ok && line.IsHot && i == pts.Length - 1)
                     {
                         _hotTip = sp;
+                        _hotTipWorld = world;
                     }
 
                     prev = sp;
@@ -633,6 +689,38 @@ public sealed partial class AircraftStage : UserControl
         else
         {
             ds.DrawImage(lines);
+        }
+
+        if (_diveStart >= 0)
+        {
+            DrawDiveFlash(ds, sender, w, h);
+        }
+    }
+
+    /// <summary>Red bloom from the blade tip that whites out the stage as the camera arrives.</summary>
+    private void DrawDiveFlash(CanvasDrawingSession ds, CanvasControl sender, float w, float h)
+    {
+        var d = DiveProgress;
+        var tip = _hotTip ?? new Vector2(w / 2f, h / 2f);
+        var reach = MathF.Max(w, h) * (0.15f + 1.2f * d * d);
+        var core = _highContrast ? _text : _heatColor;
+        using var bloom = new CanvasRadialGradientBrush(sender, [
+            new CanvasGradientStop { Position = 0f, Color = WithAlpha(_light ? core : Mix(core, Colors.White, 0.5f), Math.Clamp(d * 1.6f, 0f, 1f)) },
+            new CanvasGradientStop { Position = 0.35f, Color = WithAlpha(core, Math.Clamp(d * 1.2f, 0f, 0.85f)) },
+            new CanvasGradientStop { Position = 1f, Color = WithAlpha(core, 0f) },
+        ])
+        {
+            Center = tip,
+            RadiusX = reach,
+            RadiusY = reach,
+        };
+        ds.FillRectangle(0, 0, w, h, bloom);
+
+        // Final beat fades to the page canvas so the drill-in lands on a calm frame.
+        var fade = Math.Clamp((d - 0.7f) / 0.3f, 0f, 1f);
+        if (fade > 0f)
+        {
+            ds.FillRectangle(0, 0, w, h, WithAlpha(_canvas, fade * fade));
         }
     }
 
@@ -1091,6 +1179,10 @@ public sealed partial class AircraftStage : UserControl
         _labelFormat!.HorizontalAlignment = CanvasHorizontalAlignment.Left;
         ds.DrawText(title, textX + 2f, elbow.Y - 22f, WithAlpha(_light ? _text : Mix(accent, Colors.White, 0.3f), (_highContrast ? 1f : 0.88f) * appear), _labelFormat);
         ds.DrawText(detail, textX + 2f, elbow.Y + 5f, WithAlpha(_light ? _text : accent, (_highContrast ? 0.9f : 0.7f) * appear), _subFormat!);
+        if (flagged && part == EnginePart.Fan && IsExploded)
+        {
+            ds.DrawText("TAP BLADE TIP  →  BORESCOPE", textX + 2f, elbow.Y + 23f, WithAlpha(_light ? _text : Mix(accent, Colors.White, 0.2f), (0.35f + 0.25f * pulse) * appear), _tagFormat!);
+        }
     }
 
     private void DrawScanlines(CanvasDrawingSession ds, float w, float h)
@@ -1115,6 +1207,11 @@ public sealed partial class AircraftStage : UserControl
 
         return HitTest(point, slop) != EnginePart.None;
     }
+
+    /// <summary>The red blade tip is a generous target once the engine is exploded and the finding is open.</summary>
+    private bool IsFaultHit(Point point, float slop) =>
+        IsExploded && _diveStart < 0 && _status != AircraftStatus.Healthy && _hotTip is { } tip
+        && Vector2.Distance(tip, new Vector2((float)point.X, (float)point.Y)) < slop + 22f;
 
     private float PointerSlop => _pointerType is PointerDeviceType.Touch or PointerDeviceType.Pen ? 26f : 14f;
 
@@ -1188,7 +1285,7 @@ public sealed partial class AircraftStage : UserControl
         else
         {
             _hover = IsExploded ? HitTest(pos) : EnginePart.None;
-            var clickable = _hover != EnginePart.None || (!IsExploded && IsEngineHit(pos, 14f));
+            var clickable = _hover != EnginePart.None || (!IsExploded && IsEngineHit(pos, 14f)) || IsFaultHit(pos, 14f);
             ProtectedCursor = InputSystemCursor.Create(clickable ? InputSystemCursorShape.Hand : InputSystemCursorShape.SizeAll);
         }
 
@@ -1214,6 +1311,10 @@ public sealed partial class AircraftStage : UserControl
             {
                 ExplodeEngine();
             }
+        }
+        else if (IsFaultHit(pos, slop))
+        {
+            FaultInvoked?.Invoke(this, EventArgs.Empty);
         }
         else
         {
@@ -1256,6 +1357,9 @@ public sealed partial class AircraftStage : UserControl
             case VirtualKey.Up: _goalPitch = Math.Clamp(_goalPitch + 0.035f, -0.1f, 1.2f); break;
             case VirtualKey.Down: _goalPitch = Math.Clamp(_goalPitch - 0.035f, -0.1f, 1.2f); break;
             case VirtualKey.Home: ResetView(); break;
+            case VirtualKey.Enter when IsExploded && _hotTip is not null && _status != AircraftStatus.Healthy:
+                FaultInvoked?.Invoke(this, EventArgs.Empty);
+                break;
             case VirtualKey.Escape when SelectedPart != EnginePart.None:
                 Select(EnginePart.None);
                 break;

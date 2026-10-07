@@ -8,285 +8,442 @@
     NavigationCacheMode="Required"
     mc:Ignorable="d">
 
-    <Grid x:Name="Root">
-        <!--  Full-bleed borescope frame + ink overlay share one cell so strokes stay registered to the image  -->
-        <Grid x:Name="ScopeHost">
-            <Image
-                x:Name="ScopeImage"
-                AutomationProperties.Name="Borescope image of Engine 2 fan stage, blade 14 leading edge"
-                Source="ms-appx:///Assets/Inspection/borescope.png"
-                Stretch="UniformToFill" />
-            <Rectangle
-                Height="220"
-                VerticalAlignment="Top"
-                Fill="{ThemeResource HeroScrimBrush}"
-                IsHitTestVisible="False"
-                RenderTransformOrigin="0.5,0.5">
-                <Rectangle.RenderTransform>
-                    <ScaleTransform ScaleY="-1" />
-                </Rectangle.RenderTransform>
-            </Rectangle>
-            <InkCanvas x:Name="ScopeInk" AutomationProperties.AutomationId="InspectionInkCanvas" AutomationProperties.Name="Inspection annotation canvas" />
-        </Grid>
+    <Grid x:Name="Root" SizeChanged="OnRootSizeChanged">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  Dimmed full-bleed borescope backdrop for mood only; all inking is constrained to the framed viewport below.  -->
+        <Image
+            Grid.RowSpan="2"
+            IsHitTestVisible="False"
+            Opacity="0.25"
+            Source="ms-appx:///Assets/Inspection/borescope.png"
+            Stretch="UniformToFill" />
+        <Rectangle
+            Grid.RowSpan="2"
+            Fill="{ThemeResource HeroScrimBrush}"
+            IsHitTestVisible="False"
+            Opacity="0.86" />
 
         <!--  Header  -->
-        <StackPanel
-            Margin="40,28,40,0"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top"
-            Spacing="2">
-            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="CA 2207 · ENGINE 2 · FAN STAGE · BORESCOPE" />
-            <StackPanel Orientation="Horizontal" Spacing="18">
-                <TextBlock
-                    VerticalAlignment="Center"
-                    AutomationProperties.HeadingLevel="Level1"
-                    Style="{StaticResource TailTextStyle}"
-                    Text="{x:Bind Data.Hero.Tail, FallbackValue=N2207C}" />
-                <Border
-                    x:Name="StatusPill"
-                    VerticalAlignment="Center"
-                    AutomationProperties.AutomationId="InspectionStatusPill"
-                    Style="{StaticResource PillBorderStyle}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Ellipse
-                            x:Name="StatusDot"
-                            Width="8"
-                            Height="8"
-                            VerticalAlignment="Center" />
-                        <TextBlock x:Name="StatusText" Style="{StaticResource PillTextStyle}" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-            <TextBlock
-                Margin="0,6,0,0"
-                Foreground="{ThemeResource SecondaryTextBrush}"
-                Style="{StaticResource BodyTextStyle}"
-                Text="Probe BSI-4 · 6 mm articulating · captured 02:31 by Maya Okafor" />
-        </StackPanel>
-
-        <!--  Floating ink toolbar  -->
-        <Border
-            Margin="40,0,0,32"
-            Padding="8"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Bottom"
-            CornerRadius="{StaticResource GlassCornerRadius}"
-            Style="{StaticResource GlassPanelStyle}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <InkToolbar
-                    x:Name="ScopeToolbar"
-                    VerticalAlignment="Center"
-                    AutomationProperties.AutomationId="InspectionInkToolbar"
-                    AutomationProperties.Name="Annotation tools"
-                    Background="Transparent"
-                    InitialControls="None"
-                    TargetInkCanvas="{x:Bind ScopeInk}">
-                    <InkToolbarBallpointPenButton
-                        x:Name="PenButton"
-                        AutomationProperties.AutomationId="InkPenButton"
-                        SelectedStrokeWidth="4" />
-                    <InkToolbarHighlighterButton x:Name="HighlighterButton" AutomationProperties.AutomationId="InkHighlighterButton" />
-                    <InkToolbarStencilButton x:Name="RulerButton" AutomationProperties.AutomationId="InkRulerButton" />
-                    <InkToolbarEraserButton x:Name="EraserButton" AutomationProperties.AutomationId="InkEraserButton" />
-                </InkToolbar>
-                <Rectangle
-                    Width="1"
-                    Margin="4,6"
-                    Fill="{ThemeResource GlassStrokeBrush}" />
-                <Button
-                    x:Name="SaveInkButton"
-                    VerticalAlignment="Center"
-                    AutomationProperties.AutomationId="SaveInkButton"
-                    AutomationProperties.Name="Save annotations"
-                    Click="OnSaveInk"
-                    ToolTipService.ToolTip="Save annotations">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="14" Glyph="&#xE74E;" />
-                        <TextBlock Text="Save" />
-                    </StackPanel>
-                </Button>
-                <Button
-                    x:Name="RestoreInkButton"
-                    VerticalAlignment="Center"
-                    AutomationProperties.AutomationId="RestoreInkButton"
-                    AutomationProperties.Name="Restore saved annotations"
-                    Click="OnRestoreInk"
-                    ToolTipService.ToolTip="Restore saved annotations">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon FontSize="14" Glyph="&#xE777;" />
-                        <TextBlock Text="Restore" />
-                    </StackPanel>
-                </Button>
-                <Button
-                    x:Name="ClearInkButton"
-                    VerticalAlignment="Center"
-                    AutomationProperties.AutomationId="ClearInkButton"
-                    AutomationProperties.Name="Clear annotations"
-                    Click="OnClearInk"
-                    ToolTipService.ToolTip="Clear annotations">
-                    <FontIcon FontSize="14" Glyph="&#xE894;" />
-                </Button>
-            </StackPanel>
-        </Border>
-
-        <!--  Sign-off panel  -->
-        <Border
-            x:Name="SignOffPanel"
-            Width="380"
-            Margin="0,28,40,32"
-            Padding="24"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            CornerRadius="{StaticResource GlassCornerRadius}"
-            Style="{StaticResource GlassPanelStyle}">
-            <Grid>
-                <StackPanel Spacing="16">
-                    <StackPanel Spacing="4">
-                        <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="FINDING · WO 2207-014" />
-                        <TextBlock
-                            AutomationProperties.HeadingLevel="Level2"
-                            Style="{StaticResource SectionTitleTextStyle}"
-                            Text="Fan blade 14 · leading-edge nick"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Spacing="2">
-                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="DEPTH" />
-                            <TextBlock FontFamily="{StaticResource MonoFontFamily}" FontSize="20" Text="0.4 mm" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Spacing="2">
-                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="LIMIT" />
-                            <TextBlock
-                                FontFamily="{StaticResource MonoFontFamily}"
-                                FontSize="20"
-                                Foreground="{ThemeResource SecondaryTextBrush}"
-                                Text="0.76 mm" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Spacing="2">
-                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="AMM" />
-                            <TextBlock
-                                FontFamily="{StaticResource MonoFontFamily}"
-                                FontSize="20"
-                                Foreground="{ThemeResource SecondaryTextBrush}"
-                                Text="72-21-00" />
-                        </StackPanel>
-                    </Grid>
-
+        <Grid
+            Grid.Row="0"
+            Margin="40,28,40,20"
+            ColumnSpacing="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="2">
+                <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="CA 2207 · ENGINE 2 · FAN STAGE · BORESCOPE" />
+                <StackPanel Orientation="Horizontal" Spacing="18">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        AutomationProperties.HeadingLevel="Level1"
+                        Style="{StaticResource TailTextStyle}"
+                        Text="{x:Bind Data.Hero.Tail, FallbackValue=N2207C}" />
                     <Border
-                        Padding="12,8"
-                        Background="{ThemeResource HealthySoftBrush}"
-                        CornerRadius="8">
+                        x:Name="StatusPill"
+                        VerticalAlignment="Center"
+                        AutomationProperties.AutomationId="InspectionStatusPill"
+                        Style="{StaticResource PillBorderStyle}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon
-                                FontSize="14"
-                                Foreground="{ThemeResource HealthyBrush}"
-                                Glyph="&#xE73E;" />
-                            <TextBlock
-                                Foreground="{ThemeResource HealthyBrush}"
-                                Style="{StaticResource BodyTextStyle}"
-                                Text="Within serviceable limits · blend not required" />
+                            <Ellipse
+                                x:Name="StatusDot"
+                                Width="8"
+                                Height="8"
+                                VerticalAlignment="Center" />
+                            <TextBlock x:Name="StatusText" Style="{StaticResource PillTextStyle}" />
                         </StackPanel>
                     </Border>
-
-                    <Rectangle Height="1" Fill="{ThemeResource GlassStrokeBrush}" />
-
-                    <Grid ColumnSpacing="12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <PersonPicture
-                            Width="40"
-                            Height="40"
-                            AutomationProperties.Name="Maya Okafor"
-                            DisplayName="Maya Okafor" />
-                        <StackPanel
-                            Grid.Column="1"
-                            VerticalAlignment="Center"
-                            Spacing="0">
-                            <TextBlock Style="{StaticResource BodyTextStyle}" Text="Maya Okafor" />
-                            <TextBlock
-                                Foreground="{ThemeResource TertiaryTextBrush}"
-                                Style="{StaticResource BodyTextStyle}"
-                                Text="B1 licensed engineer · Lic. EASA-B1-48213" />
-                        </StackPanel>
-                    </Grid>
-
-                    <StackPanel Spacing="8">
-                        <Grid>
-                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="SIGNATURE" />
-                            <HyperlinkButton
-                                x:Name="ClearSignatureButton"
-                                Padding="4,0"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                AutomationProperties.AutomationId="ClearSignatureButton"
-                                Click="OnClearSignature"
-                                Content="Clear" />
-                        </Grid>
-                        <Grid
-                            x:Name="SignaturePad"
-                            Height="132"
-                            Background="{ThemeResource SurfaceBrush}"
-                            BorderBrush="{ThemeResource GlassStrokeBrush}"
-                            BorderThickness="1"
-                            CornerRadius="10">
-                            <Rectangle
-                                Height="1"
-                                Margin="20,0,20,34"
-                                VerticalAlignment="Bottom"
-                                Fill="{ThemeResource GlassStrokeBrush}"
-                                IsHitTestVisible="False" />
-                            <TextBlock
-                                x:Name="SignatureHint"
-                                Margin="20,0,0,12"
-                                VerticalAlignment="Bottom"
-                                Foreground="{ThemeResource TertiaryTextBrush}"
-                                IsHitTestVisible="False"
-                                Style="{StaticResource BodyTextStyle}"
-                                Text="Sign here" />
-                            <Canvas x:Name="SignatureRender" IsHitTestVisible="False" />
-                            <InkCanvas
-                                x:Name="SignatureInk"
-                                AutomationProperties.AutomationId="SignatureInkCanvas"
-                                AutomationProperties.Name="Signature pad" />
-                        </Grid>
-                    </StackPanel>
-
-                    <Button
-                        x:Name="SignButton"
-                        HorizontalAlignment="Stretch"
-                        AutomationProperties.AutomationId="SignAndReleaseButton"
-                        Click="OnSignAndRelease"
-                        IsEnabled="False"
-                        Style="{StaticResource AccentButtonStyle}">
-                        <StackPanel
-                            Padding="0,6"
-                            Orientation="Horizontal"
-                            Spacing="10">
-                            <FontIcon FontSize="16" Glyph="&#xE8FB;" />
-                            <TextBlock FontWeight="SemiBold" Text="Sign &amp; release to service" />
-                        </StackPanel>
-                    </Button>
-
-                    <TextBlock
-                        x:Name="ReleaseNote"
-                        HorizontalAlignment="Center"
-                        Foreground="{ThemeResource TertiaryTextBrush}"
-                        Style="{StaticResource BodyTextStyle}"
-                        Text="Releases CA 2207 for the 05:52 departure" />
                 </StackPanel>
+                <TextBlock
+                    Margin="0,6,0,0"
+                    Foreground="{ThemeResource SecondaryTextBrush}"
+                    Style="{StaticResource BodyTextStyle}"
+                    Text="Probe BSI-4 · 6 mm articulating · captured 02:31 by Maya Okafor" />
+            </StackPanel>
+            <Button
+                x:Name="BackToHologramButton"
+                Grid.Column="1"
+                Padding="14,8"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                AutomationProperties.AutomationId="BackToHologramButton"
+                AutomationProperties.Name="Back to hologram fan blade"
+                Background="{ThemeResource GlassBrush}"
+                BorderBrush="{ThemeResource GlassStrokeBrush}"
+                BorderThickness="1"
+                Click="OnBackToHologram"
+                CornerRadius="18"
+                Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Style="{StaticResource BodyTextStyle}" Text="← From hologram · Engine 2 · Fan blade 14" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <Grid
+            Grid.Row="1"
+            Margin="40,0,40,32"
+            ColumnSpacing="24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition
+                    x:Name="SignOffColumn"
+                    Width="340"
+                    MinWidth="340" />
+            </Grid.ColumnDefinitions>
+
+            <Grid RowSpacing="14">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!--  Dedicated borescope viewport: no controls or panels overlap the inkable surface.  -->
+                <Border
+                    x:Name="ScopeHost"
+                    Grid.Row="0"
+                    Background="{ThemeResource GlassBrush}"
+                    BorderBrush="{ThemeResource GlassStrokeBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    SizeChanged="OnScopeHostSizeChanged">
+                    <Grid>
+                        <Image
+                            x:Name="ScopeImage"
+                            AutomationProperties.Name="Borescope image of Engine 2 fan stage, blade 14 leading edge"
+                            ImageOpened="OnScopeImageOpened"
+                            RenderTransformOrigin="0.5,0.5"
+                            Source="ms-appx:///Assets/Inspection/borescope.png"
+                            Stretch="UniformToFill">
+                            <Image.RenderTransform>
+                                <CompositeTransform x:Name="ScopeImageTransform" />
+                            </Image.RenderTransform>
+                        </Image>
+
+                        <Grid IsHitTestVisible="False">
+                            <Rectangle
+                                Height="180"
+                                VerticalAlignment="Top"
+                                Fill="{ThemeResource HeroScrimBrush}"
+                                Opacity="0.42"
+                                RenderTransformOrigin="0.5,0.5">
+                                <Rectangle.RenderTransform>
+                                    <ScaleTransform ScaleY="-1" />
+                                </Rectangle.RenderTransform>
+                            </Rectangle>
+                            <Border
+                                BorderBrush="#33000000"
+                                BorderThickness="34"
+                                CornerRadius="16"
+                                Opacity="0.55" />
+                            <Canvas x:Name="FaultGuideLayer" IsHitTestVisible="False">
+                                <Canvas
+                                    x:Name="FaultReticle"
+                                    Width="96"
+                                    Height="96"
+                                    IsHitTestVisible="False"
+                                    Opacity="0.6"
+                                    RenderTransformOrigin="0.5,0.5"
+                                    Visibility="Collapsed">
+                                    <Canvas.RenderTransform>
+                                        <ScaleTransform x:Name="FaultReticleScale" ScaleX="1" ScaleY="1" />
+                                    </Canvas.RenderTransform>
+                                    <Ellipse
+                                        Width="96"
+                                        Height="96"
+                                        Stroke="{ThemeResource CriticalBrush}"
+                                        StrokeThickness="2.5" />
+                                    <Ellipse
+                                        Width="62"
+                                        Height="62"
+                                        Canvas.Left="17"
+                                        Canvas.Top="17"
+                                        Opacity="0.75"
+                                        Stroke="{ThemeResource CriticalBrush}"
+                                        StrokeThickness="1.5" />
+                                    <Line
+                                        Stroke="{ThemeResource CriticalBrush}"
+                                        StrokeThickness="2"
+                                        X1="48"
+                                        X2="48"
+                                        Y1="0"
+                                        Y2="16" />
+                                    <Line
+                                        Stroke="{ThemeResource CriticalBrush}"
+                                        StrokeThickness="2"
+                                        X1="48"
+                                        X2="48"
+                                        Y1="80"
+                                        Y2="96" />
+                                    <Line
+                                        Stroke="{ThemeResource CriticalBrush}"
+                                        StrokeThickness="2"
+                                        X1="0"
+                                        X2="16"
+                                        Y1="48"
+                                        Y2="48" />
+                                    <Line
+                                        Stroke="{ThemeResource CriticalBrush}"
+                                        StrokeThickness="2"
+                                        X1="80"
+                                        X2="96"
+                                        Y1="48"
+                                        Y2="48" />
+                                </Canvas>
+                            </Canvas>
+                            <TextBlock
+                                Margin="18"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                FontFamily="{StaticResource MonoFontFamily}"
+                                FontSize="13"
+                                Foreground="{ThemeResource SecondaryTextBrush}"
+                                Text="BSI-4 · 6 mm · 0°" />
+                            <TextBlock
+                                Margin="18"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Bottom"
+                                FontFamily="{StaticResource MonoFontFamily}"
+                                FontSize="13"
+                                Foreground="{ThemeResource SecondaryTextBrush}"
+                                Text="LE nick · 0.38 mm" />
+                        </Grid>
+
+                        <InkCanvas
+                            x:Name="ScopeInk"
+                            AutomationProperties.AutomationId="InspectionInkCanvas"
+                            AutomationProperties.Name="Inspection annotation canvas" />
+                    </Grid>
+                </Border>
+
+                <!--  Ink toolbar sits outside the viewport so ink strokes cannot cover controls.  -->
+                <Border
+                    Grid.Row="1"
+                    Padding="8"
+                    HorizontalAlignment="Left"
+                    CornerRadius="{StaticResource GlassCornerRadius}"
+                    Style="{StaticResource GlassPanelStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <InkToolbar
+                            x:Name="ScopeToolbar"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AutomationId="InspectionInkToolbar"
+                            AutomationProperties.Name="Annotation tools"
+                            Background="Transparent"
+                            InitialControls="None"
+                            TargetInkCanvas="{x:Bind ScopeInk}">
+                            <InkToolbarBallpointPenButton
+                                x:Name="PenButton"
+                                AutomationProperties.AutomationId="InkPenButton"
+                                SelectedStrokeWidth="4" />
+                            <InkToolbarHighlighterButton x:Name="HighlighterButton" AutomationProperties.AutomationId="InkHighlighterButton" />
+                            <InkToolbarStencilButton x:Name="RulerButton" AutomationProperties.AutomationId="InkRulerButton" />
+                            <InkToolbarEraserButton x:Name="EraserButton" AutomationProperties.AutomationId="InkEraserButton" />
+                        </InkToolbar>
+                        <Rectangle
+                            Width="1"
+                            Margin="4,6"
+                            Fill="{ThemeResource GlassStrokeBrush}" />
+                        <Button
+                            x:Name="SaveInkButton"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AutomationId="SaveInkButton"
+                            AutomationProperties.Name="Save annotations"
+                            Click="OnSaveInk"
+                            ToolTipService.ToolTip="Save annotations">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE74E;" />
+                                <TextBlock Text="Save" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            x:Name="RestoreInkButton"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AutomationId="RestoreInkButton"
+                            AutomationProperties.Name="Restore saved annotations"
+                            Click="OnRestoreInk"
+                            ToolTipService.ToolTip="Restore saved annotations">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="14" Glyph="&#xE777;" />
+                                <TextBlock Text="Restore" />
+                            </StackPanel>
+                        </Button>
+                        <Button
+                            x:Name="ClearInkButton"
+                            VerticalAlignment="Center"
+                            AutomationProperties.AutomationId="ClearInkButton"
+                            AutomationProperties.Name="Clear annotations"
+                            Click="OnClearInk"
+                            ToolTipService.ToolTip="Clear annotations">
+                            <FontIcon FontSize="14" Glyph="&#xE894;" />
+                        </Button>
+                    </StackPanel>
+                </Border>
             </Grid>
-        </Border>
+
+            <!--  Sign-off panel  -->
+            <Border
+                x:Name="SignOffPanel"
+                Grid.Column="1"
+                Padding="24"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                CornerRadius="{StaticResource GlassCornerRadius}"
+                Style="{StaticResource GlassPanelStyle}">
+                <Grid>
+                    <StackPanel Spacing="16">
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="FINDING · WO 2207-014" />
+                            <TextBlock
+                                AutomationProperties.HeadingLevel="Level2"
+                                Style="{StaticResource SectionTitleTextStyle}"
+                                Text="Fan blade 14 · leading-edge nick"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="2">
+                                <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="DEPTH" />
+                                <TextBlock FontFamily="{StaticResource MonoFontFamily}" FontSize="20" Text="0.4 mm" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="LIMIT" />
+                                <TextBlock
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="20"
+                                    Foreground="{ThemeResource SecondaryTextBrush}"
+                                    Text="0.76 mm" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Spacing="2">
+                                <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="AMM" />
+                                <TextBlock
+                                    FontFamily="{StaticResource MonoFontFamily}"
+                                    FontSize="20"
+                                    Foreground="{ThemeResource SecondaryTextBrush}"
+                                    Text="72-21-00" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border
+                            Padding="12,8"
+                            Background="{ThemeResource HealthySoftBrush}"
+                            CornerRadius="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon
+                                    FontSize="14"
+                                    Foreground="{ThemeResource HealthyBrush}"
+                                    Glyph="&#xE73E;" />
+                                <TextBlock
+                                    Foreground="{ThemeResource HealthyBrush}"
+                                    Style="{StaticResource BodyTextStyle}"
+                                    Text="Within serviceable limits · blend not required" />
+                            </StackPanel>
+                        </Border>
+
+                        <Rectangle Height="1" Fill="{ThemeResource GlassStrokeBrush}" />
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <PersonPicture
+                                Width="40"
+                                Height="40"
+                                AutomationProperties.Name="Maya Okafor"
+                                DisplayName="Maya Okafor" />
+                            <StackPanel
+                                Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Spacing="0">
+                                <TextBlock Style="{StaticResource BodyTextStyle}" Text="Maya Okafor" />
+                                <TextBlock
+                                    Foreground="{ThemeResource TertiaryTextBrush}"
+                                    Style="{StaticResource BodyTextStyle}"
+                                    Text="B1 licensed engineer · Lic. EASA-B1-48213" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Spacing="8">
+                            <Grid>
+                                <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="SIGNATURE" />
+                                <HyperlinkButton
+                                    x:Name="ClearSignatureButton"
+                                    Padding="4,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    AutomationProperties.AutomationId="ClearSignatureButton"
+                                    Click="OnClearSignature"
+                                    Content="Clear" />
+                            </Grid>
+                            <Grid
+                                x:Name="SignaturePad"
+                                Height="132"
+                                Background="{ThemeResource SurfaceBrush}"
+                                BorderBrush="{ThemeResource GlassStrokeBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                                <Rectangle
+                                    Height="1"
+                                    Margin="20,0,20,34"
+                                    VerticalAlignment="Bottom"
+                                    Fill="{ThemeResource GlassStrokeBrush}"
+                                    IsHitTestVisible="False" />
+                                <TextBlock
+                                    x:Name="SignatureHint"
+                                    Margin="20,0,0,12"
+                                    VerticalAlignment="Bottom"
+                                    Foreground="{ThemeResource TertiaryTextBrush}"
+                                    IsHitTestVisible="False"
+                                    Style="{StaticResource BodyTextStyle}"
+                                    Text="Sign here" />
+                                <Canvas x:Name="SignatureRender" IsHitTestVisible="False" />
+                                <InkCanvas
+                                    x:Name="SignatureInk"
+                                    AutomationProperties.AutomationId="SignatureInkCanvas"
+                                    AutomationProperties.Name="Signature pad" />
+                            </Grid>
+                        </StackPanel>
+
+                        <Button
+                            x:Name="SignButton"
+                            HorizontalAlignment="Stretch"
+                            AutomationProperties.AutomationId="SignAndReleaseButton"
+                            Click="OnSignAndRelease"
+                            IsEnabled="False"
+                            Style="{StaticResource AccentButtonStyle}">
+                            <StackPanel
+                                Padding="0,6"
+                                Orientation="Horizontal"
+                                Spacing="10">
+                                <FontIcon FontSize="16" Glyph="&#xE8FB;" />
+                                <TextBlock FontWeight="SemiBold" Text="Sign &amp; release to service" />
+                            </StackPanel>
+                        </Button>
+
+                        <TextBlock
+                            x:Name="ReleaseNote"
+                            HorizontalAlignment="Center"
+                            Foreground="{ThemeResource TertiaryTextBrush}"
+                            Style="{StaticResource BodyTextStyle}"
+                            Text="Releases CA 2207 for the 05:52 departure" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
 
         <!--  One-shot celebration burst  -->
-        <Canvas IsHitTestVisible="False">
+        <Canvas Grid.RowSpan="2" IsHitTestVisible="False">
             <Ellipse
                 x:Name="BurstRing"
                 Width="320"
@@ -316,6 +473,7 @@
         <!--  Released banner  -->
         <Border
             x:Name="ReleasedBanner"
+            Grid.RowSpan="2"
             Margin="0,0,440,0"
             Padding="28,18"
             HorizontalAlignment="Center"
