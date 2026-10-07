@@ -17,6 +17,7 @@ internal sealed class StageScene
     public required ContainerVisual Engine2 { get; init; }
     public required ContainerVisual[] SubContainers { get; init; }
     public required ShapeVisual PulseRing { get; init; }
+    public required StageStreak[] Streaks { get; init; }
     public required List<StageVisualEntry> Entries { get; init; }
     public required Vector3[] SubCentersUnit { get; init; }
     public required Vector3[] SubExplodedCentersUnit { get; init; }
@@ -84,6 +85,7 @@ internal static class StageSceneBuilder
         engine2.Children.InsertAtTop(pulse);
         var centers = ComputeSubCenters(entries, subs.Length, false);
         var exploded = ComputeSubCenters(entries, subs.Length, true);
+        var streaks = animationsEnabled ? StageStreaks.Create(compositor, palette, subContainers, centers) : [];
         return new StageScene
         {
             Root = root,
@@ -94,6 +96,7 @@ internal static class StageSceneBuilder
             Engine2 = engine2,
             SubContainers = subContainers,
             PulseRing = pulse,
+            Streaks = streaks,
             Entries = entries,
             SubCentersUnit = centers,
             SubExplodedCentersUnit = exploded,

@@ -43,6 +43,15 @@ public sealed partial class CompositionAircraftStage
             }
         }
 
+        if (exploded && !instant && _animationsEnabled)
+        {
+            StageStreaks.RunExplode(_scene.Streaks);
+        }
+        else
+        {
+            StageStreaks.Hide(_scene.Streaks);
+        }
+
         AnimateScalar(_scene.Airframe, nameof(Visual.Opacity), exploded ? 0.15f : 1f, TimeSpan.FromMilliseconds(360), TimeSpan.Zero);
         AnimateScalar(_scene.Engine1, nameof(Visual.Opacity), exploded ? 0.15f : 1f, TimeSpan.FromMilliseconds(360), TimeSpan.Zero);
         if (exploded)
@@ -203,6 +212,8 @@ public sealed partial class CompositionAircraftStage
             container.StopAnimation(nameof(Visual.Offset));
             container.StopAnimation(nameof(Visual.RotationAngle));
         }
+
+        StageStreaks.Hide(_scene.Streaks);
     }
 
     private static void AnimateVectorSpring(Visual visual, string property, Vector3 target, TimeSpan delay)
