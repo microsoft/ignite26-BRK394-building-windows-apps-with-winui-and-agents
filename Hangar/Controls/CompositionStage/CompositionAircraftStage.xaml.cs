@@ -49,11 +49,39 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
 
     public CompositionAircraftStage()
     {
-        InitializeComponent();
+        try
+        {
+            InitializeComponent();
+        }
+        catch (Exception ex)
+        {
+            LogStageError("InitializeComponent", ex);
+            throw;
+        }
+
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ActualThemeChanged += (_, _) => RebuildScene();
-        _accessibility.HighContrastChanged += (_, _) => RebuildScene();
+        try
+        {
+            _accessibility.HighContrastChanged += (_, _) => DispatcherQueue.TryEnqueue(RebuildScene);
+        }
+        catch (Exception ex)
+        {
+            LogStageError("HighContrastChanged", ex);
+        }
+    }
+
+    private static void LogStageError(string where, Exception ex)
+    {
+        try
+        {
+            var path = System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "stage-error.log");
+            System.IO.File.AppendAllText(path, $"{DateTime.Now:O} {where}\n{ex}\nInner: {ex.InnerException}\n\n");
+        }
+        catch
+        {
+        }
     }
 
     public event EventHandler<EnginePart>? PartSelected;
