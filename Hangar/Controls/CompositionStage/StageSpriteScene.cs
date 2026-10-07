@@ -155,7 +155,7 @@ internal static class StageSpriteScene
 
     private static void BuildAirframe(Compositor compositor, StagePalette palette, StageBakeStats stats, WireLine[] lines, ContainerVisual airframe, ContainerVisual ribs)
     {
-        var ringLines = lines.Where(IsFuselageRing).OrderByDescending(l => l.Points[0].X).ToArray();
+        var ringLines = lines.Where(l => !IsEngine1Line(l) && IsFuselageRing(l)).OrderByDescending(l => l.Points[0].X).ToArray();
         foreach (var line in ringLines)
         {
             var sprite = MakePlaneSprite(compositor, palette, stats, $"rib-{line.Points[0].X:F1}", [line], line.Points[0], Vector3.UnitZ, -Vector3.UnitY, 2.35f, StageBakeTone.Airframe);
