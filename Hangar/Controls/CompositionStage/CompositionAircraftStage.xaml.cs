@@ -204,8 +204,10 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
     private void BuildScene()
     {
         var compositor = ElementCompositionPreview.GetElementVisual(Host).Compositor;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         _palette = StagePalette.Create(this, compositor);
         _scene = StageSceneBuilder.Build(compositor, _palette, _animationsEnabled);
+        StagePerf.Report("legacy-shapes", _scene.Root, sw.Elapsed.TotalMilliseconds);
         _maxDelay = WireMesh.SubParts.Count == 0 ? 0 : WireMesh.SubParts.Max(s => s.Delay);
         ElementCompositionPreview.SetElementChildVisual(Host, _scene.Root);
         ApplyCamera(false);
