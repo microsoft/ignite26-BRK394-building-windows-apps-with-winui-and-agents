@@ -124,6 +124,7 @@ public sealed partial class MainWindow : Window
     {
         "Fleet" => typeof(FleetPage),
         "Aircraft" => typeof(AircraftPage),
+        "CompositionAircraft" => typeof(CompositionAircraftPage),
         "WorkOrders" => typeof(WorkOrdersPage),
         "Inspections" => typeof(InspectionsPage),
         _ => null,
@@ -207,11 +208,13 @@ public sealed partial class MainWindow : Window
                 ElementTheme? theme = parts.Length > 1 && parts[1].Equals("light", StringComparison.OrdinalIgnoreCase) ? ElementTheme.Light : null;
                 InspectionsPage.DebugAutoSign = parts.Contains("sign", StringComparer.OrdinalIgnoreCase);
                 AircraftPage.DebugExplode = parts.Contains("explode", StringComparer.OrdinalIgnoreCase);
+                CompositionAircraftPage.DebugExplode = parts.Contains("explode", StringComparer.OrdinalIgnoreCase);
                 foreach (var token in parts.Skip(1))
                 {
                     if (Enum.TryParse<Models.EnginePart>(token, true, out var part) && part != Models.EnginePart.None)
                     {
                         AircraftPage.DebugFocusPart = part;
+                        CompositionAircraftPage.DebugFocusPart = part;
                     }
                 }
                 return (page ?? typeof(FleetPage), theme);

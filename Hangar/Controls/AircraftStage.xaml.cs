@@ -28,7 +28,7 @@ namespace Hangar.Controls;
 /// a scanning sweep, spinning fan, blinking hot blade and a spring-driven "explode" of Engine 2.
 /// (Composition Scenes was not viable on this SDK — see docs/SCENES-SPIKE.md.)
 /// </summary>
-public sealed partial class AircraftStage : UserControl
+public sealed partial class AircraftStage : UserControl, IAircraftStage
 {
     private const float DefaultYaw = 0.78f;
     private const float DefaultPitch = 0.30f;

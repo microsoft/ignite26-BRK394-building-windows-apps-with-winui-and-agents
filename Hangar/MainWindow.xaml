@@ -53,7 +53,7 @@
                     AutomationProperties.AutomationId="GlobalSearchBox"
                     AutomationProperties.Name="Search tail, part, or work order"
                     ItemsSource="{x:Bind ViewModel.Suggestions, Mode=OneWay}"
-                    PlaceholderText="Search tail, part, or work order"
+                    Text="Search tail, part, or work order"
                     QueryIcon="Find"
                     QuerySubmitted="OnSearchQuerySubmitted"
                     TextChanged="OnSearchTextChanged"
@@ -200,6 +200,14 @@
                     Tag="Aircraft">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xF158;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem
+                    AutomationProperties.AutomationId="NavCompositionAircraft"
+                    Content="Aircraft · Composition"
+                    Tag="CompositionAircraft">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE81E;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
