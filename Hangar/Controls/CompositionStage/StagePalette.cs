@@ -1,5 +1,4 @@
 using Hangar.Helpers;
-using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Windows.UI;
@@ -9,19 +8,27 @@ namespace Hangar.Controls.CompositionStage;
 
 internal sealed class StagePalette
 {
-    public StagePalette(CompositionColorBrush cyanCore, CompositionColorBrush cyanGlow, CompositionColorBrush airframe,
-        CompositionColorBrush amber, CompositionColorBrush hot, CompositionColorBrush healthy, CompositionColorBrush label,
-        CompositionColorBrush canvas, bool highContrast)
+    public StagePalette(Color cyanCore, Color cyanGlow, Color airframe, Color amber, Color hot,
+        Color healthy, Color label, Color canvas, bool highContrast, Compositor compositor)
     {
-        CyanCore = cyanCore;
-        CyanGlow = cyanGlow;
-        Airframe = airframe;
-        Amber = amber;
-        Hot = hot;
-        Healthy = healthy;
-        Label = label;
-        Canvas = canvas;
+        CyanCoreColor = cyanCore;
+        CyanGlowColor = cyanGlow;
+        AirframeColor = airframe;
+        AmberColor = amber;
+        HotColor = hot;
+        HealthyColor = healthy;
+        LabelColor = label;
+        CanvasColor = canvas;
         HighContrast = highContrast;
+        CyanCore = compositor.CreateColorBrush(cyanCore);
+        CyanGlow = compositor.CreateColorBrush(cyanGlow);
+        Airframe = compositor.CreateColorBrush(airframe);
+        Amber = compositor.CreateColorBrush(amber);
+        Hot = compositor.CreateColorBrush(hot);
+        Healthy = compositor.CreateColorBrush(healthy);
+        Label = compositor.CreateColorBrush(label);
+        Canvas = compositor.CreateColorBrush(canvas);
+        CacheKey = $"{(highContrast ? "hc" : "std")}-{cyanCore}-{cyanGlow}-{airframe}-{amber}-{hot}-{healthy}-{canvas}";
     }
 
     public CompositionColorBrush CyanCore { get; }
@@ -32,7 +39,16 @@ internal sealed class StagePalette
     public CompositionColorBrush Healthy { get; }
     public CompositionColorBrush Label { get; }
     public CompositionColorBrush Canvas { get; }
+    public Color CyanCoreColor { get; }
+    public Color CyanGlowColor { get; }
+    public Color AirframeColor { get; }
+    public Color AmberColor { get; }
+    public Color HotColor { get; set; }
+    public Color HealthyColor { get; }
+    public Color LabelColor { get; }
+    public Color CanvasColor { get; }
     public bool HighContrast { get; }
+    public string CacheKey { get; }
 
     public static StagePalette Create(FrameworkElement owner, Compositor compositor)
     {
@@ -46,29 +62,16 @@ internal sealed class StagePalette
         var text = ThemeRes.Brush(owner, "PrimaryTextBrush") is Microsoft.UI.Xaml.Media.SolidColorBrush b ? b.Color : accent;
         var light = !highContrast && owner.ActualTheme == ElementTheme.Light;
         var core = highContrast ? text : light ? Darken(accent, 0.38f) : accent;
-        var glow = highContrast ? Transparent(core) : WithAlpha(accent, (byte)(light ? 42 : 52));
-        var air = highContrast ? text : WithAlpha(light ? Darken(accent, 0.45f) : accent, light ? (byte)160 : (byte)118);
-
-        return new StagePalette(
-            compositor.CreateColorBrush(core),
-            compositor.CreateColorBrush(glow),
-            compositor.CreateColorBrush(air),
-            compositor.CreateColorBrush(amber),
-            compositor.CreateColorBrush(critical),
-            compositor.CreateColorBrush(healthy),
-            compositor.CreateColorBrush(text),
-            compositor.CreateColorBrush(canvas),
-            highContrast);
+        var glow = highContrast ? Transparent(core) : WithAlpha(accent, (byte)(light ? 42 : 62));
+        var air = highContrast ? text : WithAlpha(light ? Darken(accent, 0.45f) : accent, light ? (byte)170 : (byte)128);
+        return new StagePalette(core, glow, air, amber, critical, healthy, text, canvas, highContrast, compositor);
     }
 
     public static Color Lerp(Color a, Color b, float t)
     {
         t = Math.Clamp(t, 0, 1);
-        return Color.FromArgb(
-            (byte)(a.A + (b.A - a.A) * t),
-            (byte)(a.R + (b.R - a.R) * t),
-            (byte)(a.G + (b.G - a.G) * t),
-            (byte)(a.B + (b.B - a.B) * t));
+        return Color.FromArgb((byte)(a.A + (b.A - a.A) * t), (byte)(a.R + (b.R - a.R) * t),
+            (byte)(a.G + (b.G - a.G) * t), (byte)(a.B + (b.B - a.B) * t));
     }
 
     public static Color WithAlpha(Color color, byte alpha) => Color.FromArgb(alpha, color.R, color.G, color.B);

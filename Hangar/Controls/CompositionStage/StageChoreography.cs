@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Windows.Foundation;
 using Windows.System;
-using Windows.UI;
 
 namespace Hangar.Controls;
 
@@ -25,42 +24,35 @@ public sealed partial class CompositionAircraftStage
 
         StopIdle();
         ShowLabels(false);
-        for (var i = 0; i < _scene.SubContainers.Length; i++)
+        foreach (var part in _scene.Engine2Sprites)
         {
-            var sub = WireMesh.SubParts[i];
-            var targetOffset = exploded ? StageMath.ExplodeOffsetUnit(i) : Vector3.Zero;
+            var sub = WireMesh.SubParts[part.Sub];
+            var targetOffset = exploded ? part.RestOffset + part.ExplodedOffset : part.RestOffset;
             var targetRoll = exploded ? sub.Roll : 0f;
-            var delay = exploded ? sub.Delay : StageMath.ReverseDelay(i, _maxDelay);
+            var delay = exploded ? sub.Delay : StageMath.ReverseDelay(part.Sub, _maxDelay);
             if (instant || !_animationsEnabled)
             {
-                _scene.SubContainers[i].Offset = targetOffset;
-                _scene.SubContainers[i].RotationAngle = targetRoll;
+                part.Visual.Offset = targetOffset;
+                part.Visual.RotationAngle = targetRoll;
             }
             else
             {
-                AnimateVectorSpring(_scene.SubContainers[i], nameof(Visual.Offset), targetOffset, TimeSpan.FromSeconds(delay));
-                AnimateScalarSpring(_scene.SubContainers[i], nameof(Visual.RotationAngle), targetRoll, TimeSpan.FromSeconds(delay));
+                AnimateVectorSpring(part.Visual, nameof(Visual.Offset), targetOffset, TimeSpan.FromSeconds(delay));
+                AnimateScalarSpring(part.Visual, nameof(Visual.RotationAngle), targetRoll, TimeSpan.FromSeconds(delay));
             }
         }
 
-        if (exploded && !instant && _animationsEnabled)
-        {
-            StageStreaks.RunExplode(_scene.Streaks);
-        }
-        else
-        {
-            StageStreaks.Hide(_scene.Streaks);
-        }
-
-        AnimateScalar(_scene.Airframe, nameof(Visual.Opacity), exploded ? 0.15f : 1f, TimeSpan.FromMilliseconds(360), TimeSpan.Zero);
+        AnimateScalar(_scene.Airframe, nameof(Visual.Opacity), exploded ? 0.18f : 1f, TimeSpan.FromMilliseconds(360), TimeSpan.Zero);
         AnimateScalar(_scene.Engine1, nameof(Visual.Opacity), exploded ? 0.15f : 1f, TimeSpan.FromMilliseconds(360), TimeSpan.Zero);
         if (exploded)
         {
             RunPulse();
+            RunStreaks();
             QueueLabels();
         }
         else
         {
+            HideStreaks();
             ApplySelection();
         }
     }
@@ -72,15 +64,9 @@ public sealed partial class CompositionAircraftStage
             return;
         }
 
-        for (var i = 0; i < _scene.SubContainers.Length; i++)
+        foreach (var part in _scene.Engine2Sprites)
         {
-            var group = WireMesh.SubParts[i].Group;
-            _scene.SubContainers[i].Opacity = SelectedPart == EnginePart.None || group == SelectedPart ? 1f : 0.15f;
-        }
-
-        foreach (var entry in _scene.Entries.Where(e => e.Batch.Kind == StageBatchKind.Engine2 && e.Batch.Sub < 0))
-        {
-            entry.Visual.Opacity = SelectedPart == EnginePart.None || entry.Batch.Part == SelectedPart ? 1f : 0.15f;
+            part.Visual.Opacity = SelectedPart == EnginePart.None || part.Part == SelectedPart ? 1f : 0.15f;
         }
     }
 
@@ -91,20 +77,14 @@ public sealed partial class CompositionAircraftStage
             return;
         }
 
-        var amber = ThemeRes.Get<Color>(this, "AttentionColor");
-        var critical = ThemeRes.Get<Color>(this, "CriticalColor");
-        _palette.Hot.Color = StagePalette.Lerp(amber, critical, (float)_heat);
-        foreach (var entry in _scene.Entries.Where(e => e.Batch.IsHot))
+        _palette.HotColor = StagePalette.Lerp(_palette.AmberColor, _palette.HotColor, (float)_heat);
+        var healthy = _status == AircraftStatus.Healthy;
+        foreach (var part in _scene.Engine2Sprites)
         {
-            if (_status == AircraftStatus.Healthy)
+            part.Visual.Brush = healthy ? part.HealthyBrush : part.IsHot ? part.HotBrush : part.NormalBrush;
+            if (part.IsHot)
             {
-                entry.Core.StrokeBrush = _palette.CyanCore;
-                entry.Glow.StrokeBrush = _palette.CyanGlow;
-            }
-            else
-            {
-                entry.Core.StrokeBrush = _heat > 0.05 ? _palette.Hot : _palette.Amber;
-                entry.Glow.StrokeBrush = _heat > 0.05 ? _palette.Hot : _palette.Amber;
+                part.Visual.Opacity = healthy ? 0.72f : (float)Math.Clamp(0.62 + _heat * 0.38, 0.62, 1.0);
             }
         }
     }
@@ -116,14 +96,50 @@ public sealed partial class CompositionAircraftStage
             return;
         }
 
-        var origin = WireMesh.Engine2Origin;
-        var from = StageMath.ToUnit(origin + new Vector3(0.6f, 0, 0)) - new Vector3(110, 110, 0);
-        var to = StageMath.ToUnit(origin + new Vector3(-5.0f, 0, 0)) - new Vector3(110, 110, 0);
+        var from = new Vector3(-110, -110, 0.6f * StageMath.K);
+        var to = new Vector3(-110, -110, -5.0f * StageMath.K);
         _scene.PulseRing.Opacity = 1;
+        _scene.PulseRing.Scale = Vector3.One;
         _scene.PulseRing.Offset = from;
         AnimateVector(_scene.PulseRing, nameof(Visual.Offset), to, TimeSpan.FromMilliseconds(920), TimeSpan.Zero);
-        AnimateVector(_scene.PulseRing, nameof(Visual.Scale), new Vector3(1.6f), TimeSpan.FromMilliseconds(920), TimeSpan.Zero, Vector3.One);
+        AnimateVector(_scene.PulseRing, nameof(Visual.Scale), new Vector3(1.65f), TimeSpan.FromMilliseconds(920), TimeSpan.Zero, Vector3.One);
         AnimateScalar(_scene.PulseRing, nameof(Visual.Opacity), 0f, TimeSpan.FromMilliseconds(920), TimeSpan.Zero, 0.9f);
+    }
+
+    private void RunStreaks()
+    {
+        if (_scene is null || !_animationsEnabled)
+        {
+            return;
+        }
+
+        var anchors = _scene.Engine2Sprites.Where(s => s.Sub % 7 == 0).Take(_scene.Streaks.Count).ToArray();
+        for (var i = 0; i < _scene.Streaks.Count; i++)
+        {
+            var streak = _scene.Streaks[i];
+            var anchor = anchors.Length == 0 ? new Vector3(-64, -18, 0) : anchors[i % anchors.Length].RestOffset;
+            var from = anchor + new Vector3(-42, 10 - i * 4, 0);
+            var to = from + new Vector3(80, 0, -90 - i * 12);
+            streak.Offset = from;
+            streak.Opacity = 0.65f;
+            streak.RotationAngle = (i - 2) * 0.16f;
+            AnimateVector(streak, nameof(Visual.Offset), to, TimeSpan.FromMilliseconds(720), TimeSpan.FromMilliseconds(80 * i));
+            AnimateScalar(streak, nameof(Visual.Opacity), 0f, TimeSpan.FromMilliseconds(720), TimeSpan.FromMilliseconds(80 * i), 0.65f);
+        }
+    }
+
+    private void HideStreaks()
+    {
+        if (_scene is null)
+        {
+            return;
+        }
+
+        foreach (var streak in _scene.Streaks)
+        {
+            streak.StopAnimation(nameof(Visual.Opacity));
+            streak.Opacity = 0;
+        }
     }
 
     private void RunCelebrate()
@@ -133,16 +149,31 @@ public sealed partial class CompositionAircraftStage
             return;
         }
 
+        foreach (var part in _scene.Engine2Sprites)
+        {
+            part.Visual.Brush = part.HealthyBrush;
+        }
+
         RunPulse();
         AnimateScalar(_scene.Engine2, nameof(Visual.Opacity), 0.72f, TimeSpan.FromMilliseconds(170), TimeSpan.Zero, 1f);
         AnimateScalar(_scene.Engine2, nameof(Visual.Opacity), 1f, TimeSpan.FromMilliseconds(420), TimeSpan.FromMilliseconds(170), 0.72f);
+        QueueHealthyReset();
     }
 
-    private void QueueLabels()
+    private void QueueHealthyReset()
+    {
+        var timer = DispatcherQueue.CreateTimer();
+        timer.Interval = TimeSpan.FromMilliseconds(720);
+        timer.IsRepeating = false;
+        timer.Tick += (_, _) => { timer.Stop(); RefreshHotBlade(); };
+        timer.Start();
+    }
+
+    private void QueueLabels(TimeSpan? delay = null)
     {
         _labelTimer?.Stop();
         _labelTimer = DispatcherQueue.CreateTimer();
-        _labelTimer.Interval = TimeSpan.FromSeconds(_animationsEnabled ? _maxDelay + 0.85f : 0.02f);
+        _labelTimer.Interval = delay ?? TimeSpan.FromSeconds(_animationsEnabled ? _maxDelay + 0.85f : 0.02f);
         _labelTimer.IsRepeating = false;
         _labelTimer.Tick += (_, _) => ShowLabels(IsExploded);
         _labelTimer.Start();
@@ -156,7 +187,7 @@ public sealed partial class CompositionAircraftStage
         _idleTimer.IsRepeating = true;
         _idleTimer.Tick += (_, _) =>
         {
-            if (_scene is null || !_animationsEnabled || IsExploded || _idleRunning)
+            if (_scene is null || _cameraRig is null || !_animationsEnabled || IsExploded || _idleRunning)
             {
                 return;
             }
@@ -164,20 +195,8 @@ public sealed partial class CompositionAircraftStage
             if (Environment.TickCount64 / 1000.0 - _lastInteraction > 4)
             {
                 _idleRunning = true;
-                _scene.World.CenterPoint = StageMath.ToUnit(StageMath.DefaultTargetWorld);
-                _scene.World.RotationAxis = Vector3.UnitY;
-                var turn = _scene.World.Compositor.CreateScalarKeyFrameAnimation();
-                turn.InsertKeyFrame(1f, MathF.Tau);
-                turn.Duration = TimeSpan.FromSeconds(90);
-                turn.IterationBehavior = AnimationIterationBehavior.Forever;
-                _scene.World.StartAnimation(nameof(Visual.RotationAngle), turn);
-                var bob = _scene.World.Compositor.CreateVector3KeyFrameAnimation();
-                bob.InsertKeyFrame(0f, Vector3.Zero);
-                bob.InsertKeyFrame(0.5f, new Vector3(0, -6, 0));
-                bob.InsertKeyFrame(1f, Vector3.Zero);
-                bob.Duration = TimeSpan.FromSeconds(6);
-                bob.IterationBehavior = AnimationIterationBehavior.Forever;
-                _scene.World.StartAnimation(nameof(Visual.Offset), bob);
+                ShowLabels(false);
+                _cameraRig.StartTurntable();
             }
         };
         _idleTimer.Start();
@@ -185,16 +204,8 @@ public sealed partial class CompositionAircraftStage
 
     private void StopIdle()
     {
-        if (_scene is null)
-        {
-            return;
-        }
-
         _idleRunning = false;
-        _scene.World.StopAnimation(nameof(Visual.RotationAngle));
-        _scene.World.StopAnimation(nameof(Visual.Offset));
-        _scene.World.RotationAngle = 0;
-        _scene.World.Offset = Vector3.Zero;
+        _cameraRig?.StopTurntable();
     }
 
     private void StopSceneAnimations()
@@ -207,13 +218,13 @@ public sealed partial class CompositionAircraftStage
         _scene.World.StopAnimation(nameof(Visual.TransformMatrix));
         _scene.PulseRing.StopAnimation(nameof(Visual.Offset));
         _scene.PulseRing.StopAnimation(nameof(Visual.Opacity));
-        foreach (var container in _scene.SubContainers)
+        foreach (var part in _scene.Engine2Sprites)
         {
-            container.StopAnimation(nameof(Visual.Offset));
-            container.StopAnimation(nameof(Visual.RotationAngle));
+            part.Visual.StopAnimation(nameof(Visual.Offset));
+            part.Visual.StopAnimation(nameof(Visual.RotationAngle));
         }
 
-        StageStreaks.Hide(_scene.Streaks);
+        HideStreaks();
     }
 
     private static void AnimateVectorSpring(Visual visual, string property, Vector3 target, TimeSpan delay)
@@ -221,8 +232,8 @@ public sealed partial class CompositionAircraftStage
         var spring = visual.Compositor.CreateSpringVector3Animation();
         spring.FinalValue = target;
         spring.DelayTime = delay;
-        spring.DampingRatio = 0.55f;
-        spring.Period = TimeSpan.FromMilliseconds(360);
+        spring.DampingRatio = 0.58f;
+        spring.Period = TimeSpan.FromMilliseconds(330);
         visual.StartAnimation(property, spring);
     }
 
@@ -231,23 +242,15 @@ public sealed partial class CompositionAircraftStage
         var spring = visual.Compositor.CreateSpringScalarAnimation();
         spring.FinalValue = target;
         spring.DelayTime = delay;
-        spring.DampingRatio = 0.55f;
-        spring.Period = TimeSpan.FromMilliseconds(360);
+        spring.DampingRatio = 0.58f;
+        spring.Period = TimeSpan.FromMilliseconds(330);
         visual.StartAnimation(property, spring);
-    }
-    private static void AnimateMatrix(Visual visual, Matrix4x4 target, TimeSpan duration)
-    {
-        visual.TransformMatrix = target;
     }
 
     private static void AnimateVector(Visual visual, string property, Vector3 target, TimeSpan duration, TimeSpan delay, Vector3? start = null)
     {
         var animation = visual.Compositor.CreateVector3KeyFrameAnimation();
-        if (start is { } s)
-        {
-            animation.InsertKeyFrame(0f, s);
-        }
-
+        if (start is { } s) animation.InsertKeyFrame(0f, s);
         animation.InsertKeyFrame(1f, target);
         animation.Duration = duration;
         animation.DelayTime = delay;
@@ -257,11 +260,7 @@ public sealed partial class CompositionAircraftStage
     private static void AnimateScalar(Visual visual, string property, float target, TimeSpan duration, TimeSpan delay, float? start = null)
     {
         var animation = visual.Compositor.CreateScalarKeyFrameAnimation();
-        if (start is { } s)
-        {
-            animation.InsertKeyFrame(0f, s);
-        }
-
+        if (start is { } s) animation.InsertKeyFrame(0f, s);
         animation.InsertKeyFrame(1f, target);
         animation.Duration = duration;
         animation.DelayTime = delay;
@@ -285,17 +284,13 @@ public sealed partial class CompositionAircraftStage
         var pos = e.GetCurrentPoint(Root).Position;
         if (_pressed)
         {
-            if (!_dragging && Math.Abs(pos.X - _pressPoint.X) + Math.Abs(pos.Y - _pressPoint.Y) > 5)
-            {
-                _dragging = true;
-            }
-
+            if (!_dragging && Math.Abs(pos.X - _pressPoint.X) + Math.Abs(pos.Y - _pressPoint.Y) > 5) _dragging = true;
             if (_dragging)
             {
                 _yaw += (float)(pos.X - _lastPoint.X) * 0.008f;
                 _pitch = Math.Clamp(_pitch + (float)(pos.Y - _lastPoint.Y) * 0.006f, -0.1f, 1.2f);
                 _lastInteraction = Environment.TickCount64 / 1000.0;
-                ApplyCamera(false);
+                ApplyCamera(true);
             }
         }
         else
@@ -315,34 +310,19 @@ public sealed partial class CompositionAircraftStage
         Root.ReleasePointerCapture(e.Pointer);
         if (!click)
         {
-            if (IsExploded)
-            {
-                ShowLabels(true);
-            }
-
+            if (IsExploded) QueueLabels(TimeSpan.FromMilliseconds(250));
             return;
         }
 
         var pos = e.GetCurrentPoint(Root).Position;
         if (!IsExploded)
         {
-            if (IsEngineHit(pos, 40))
-            {
-                ExplodeEngine();
-            }
+            if (IsEngineHit(pos, 40)) ExplodeEngine();
         }
         else
         {
             var part = HitTest(pos);
-            if (part == EnginePart.None)
-            {
-                CollapseEngine();
-            }
-            else
-            {
-                Select(part == SelectedPart ? EnginePart.None : part);
-                ShowLabels(true);
-            }
+            if (part == EnginePart.None) CollapseEngine(); else Select(part == SelectedPart ? EnginePart.None : part);
         }
 
         e.Handled = true;
@@ -354,15 +334,18 @@ public sealed partial class CompositionAircraftStage
     {
         _pressed = false;
         _dragging = false;
+        if (IsExploded) QueueLabels(TimeSpan.FromMilliseconds(250));
     }
 
     private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
     {
         StopIdle();
+        ShowLabels(false);
         var delta = e.GetCurrentPoint(Root).Properties.MouseWheelDelta;
         _distance = Math.Clamp(_distance * (1f - delta / 1200f), 8f, 80f);
         _lastInteraction = Environment.TickCount64 / 1000.0;
-        ApplyCamera(false);
+        ApplyCamera(true);
+        if (IsExploded) QueueLabels(TimeSpan.FromMilliseconds(250));
         e.Handled = true;
     }
 
@@ -385,28 +368,15 @@ public sealed partial class CompositionAircraftStage
 
     private EnginePart HitTest(Point pos, double slop = 40)
     {
-        if (_scene is null)
-        {
-            return EnginePart.None;
-        }
-
+        if (_scene is null) return EnginePart.None;
         var camera = CurrentCamera();
         var best = (Part: EnginePart.None, D2: slop * slop);
         for (var i = 0; i < _scene.SubExplodedCentersUnit.Length; i++)
         {
             var p = StageMath.Project(_scene.SubExplodedCentersUnit[i], camera);
-            if (p is null)
-            {
-                continue;
-            }
-
-            var dx = p.Value.X - pos.X;
-            var dy = p.Value.Y - pos.Y;
-            var d2 = dx * dx + dy * dy;
-            if (d2 < best.D2)
-            {
-                best = (WireMesh.SubParts[i].Group, d2);
-            }
+            if (p is null) continue;
+            var d2 = Math.Pow(p.Value.X - pos.X, 2) + Math.Pow(p.Value.Y - pos.Y, 2);
+            if (d2 < best.D2) best = (WireMesh.SubParts[i].Group, d2);
         }
 
         return best.Part;
@@ -414,22 +384,12 @@ public sealed partial class CompositionAircraftStage
 
     private bool IsEngineHit(Point pos, double margin)
     {
-        if (_scene is null)
-        {
-            return false;
-        }
-
+        if (_scene is null) return false;
         var camera = CurrentCamera();
         var hits = _scene.SubCentersUnit.Select(p => StageMath.Project(p, camera)).Where(p => p is not null).Select(p => p!.Value).ToArray();
-        if (hits.Length == 0)
-        {
-            return false;
-        }
-
-        var minX = hits.Min(p => p.X) - margin;
-        var maxX = hits.Max(p => p.X) + margin;
-        var minY = hits.Min(p => p.Y) - margin;
-        var maxY = hits.Max(p => p.Y) + margin;
-        return pos.X >= minX && pos.X <= maxX && pos.Y >= minY && pos.Y <= maxY;
+        if (hits.Length == 0) return false;
+        return pos.X >= hits.Min(p => p.X) - margin && pos.X <= hits.Max(p => p.X) + margin && pos.Y >= hits.Min(p => p.Y) - margin && pos.Y <= hits.Max(p => p.Y) + margin;
     }
 }
+
+

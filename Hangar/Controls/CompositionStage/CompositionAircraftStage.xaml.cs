@@ -13,7 +13,6 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
 using Windows.System;
-using Windows.UI;
 using Windows.UI.ViewManagement;
 
 namespace Hangar.Controls;
@@ -26,12 +25,12 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
     private const float EngineYaw = 1.12f;
     private const float EnginePitch = 0.24f;
     private const float EngineDistance = 16f;
-    private static readonly EnginePart[] Parts = [EnginePart.Nacelle, EnginePart.Fan, EnginePart.Compressor, EnginePart.Turbine];
 
     private readonly AccessibilitySettings _accessibility = new();
     private readonly UISettings _uiSettings = new();
     private StageScene? _scene;
     private StagePalette? _palette;
+    private StageCameraRig? _cameraRig;
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _labelTimer;
     private Microsoft.UI.Dispatching.DispatcherQueueTimer? _idleTimer;
     private Thickness _focusPadding;
@@ -72,18 +71,6 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
         }
     }
 
-    private static void LogStageError(string where, Exception ex)
-    {
-        try
-        {
-            var path = System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "stage-error.log");
-            System.IO.File.AppendAllText(path, $"{DateTime.Now:O} {where}\n{ex}\nInner: {ex.InnerException}\n\n");
-        }
-        catch
-        {
-        }
-    }
-
     public event EventHandler<EnginePart>? PartSelected;
     public event EventHandler<bool>? ExplodedChanged;
     public bool IsExploded { get; private set; }
@@ -92,11 +79,7 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
     public Thickness FocusPadding
     {
         get => _focusPadding;
-        set
-        {
-            _focusPadding = value;
-            ApplyCamera(false);
-        }
+        set { _focusPadding = value; ApplyCamera(false); }
     }
 
     public void SetExploded(bool exploded)
@@ -193,11 +176,7 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
     {
         _idleTimer?.Stop();
         _labelTimer?.Stop();
-        if (_scene is not null)
-        {
-            StopSceneAnimations();
-        }
-
+        StopSceneAnimations();
         ElementCompositionPreview.SetElementChildVisual(Host, null);
     }
 
@@ -206,13 +185,15 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
         var compositor = ElementCompositionPreview.GetElementVisual(Host).Compositor;
         var sw = System.Diagnostics.Stopwatch.StartNew();
         _palette = StagePalette.Create(this, compositor);
-        _scene = StageSceneBuilder.Build(compositor, _palette, _animationsEnabled);
-        StagePerf.Report("legacy-shapes", _scene.Root, sw.Elapsed.TotalMilliseconds);
+        _scene = StageSpriteScene.Build(compositor, _palette, _animationsEnabled);
         _maxDelay = WireMesh.SubParts.Count == 0 ? 0 : WireMesh.SubParts.Max(s => s.Delay);
         ElementCompositionPreview.SetElementChildVisual(Host, _scene.Root);
+        _cameraRig = new StageCameraRig(_scene.Root, _scene.World, CurrentCamera(), _animationsEnabled);
         ApplyCamera(false);
         ApplySelection();
         RefreshHotBlade();
+        sw.Stop();
+        StagePerf.Report("baked-sprites", _scene.Root, sw.Elapsed.TotalMilliseconds, _scene.BakeMs, _scene.CachedSurfaces, _scene.BakedSurfaces);
     }
 
     private void RebuildScene()
@@ -238,65 +219,30 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
 
     private void ApplyCamera(bool animate)
     {
-        if (_scene is null || ActualWidth <= 0 || ActualHeight <= 0)
+        if (_scene is null || _cameraRig is null || ActualWidth <= 0 || ActualHeight <= 0)
         {
             return;
         }
 
-        var camera = CurrentCamera();
-        _scene.Root.Size = new Vector2((float)ActualWidth, (float)ActualHeight);
-        _scene.Backdrop.Size = _scene.Root.Size;
-        var p = Matrix4x4.Identity;
-        p.M34 = -1f / Math.Max(1, camera.Focal);
-        _scene.Root.TransformMatrix = Matrix4x4.CreateTranslation(-camera.Center.X, -camera.Center.Y, 0) * p * Matrix4x4.CreateTranslation(camera.Center.X, camera.Center.Y, 0);
-        var target = StageMath.CompositionWorldMatrix(camera);
-        if (animate && _animationsEnabled)
-        {
-            AnimateMatrix(_scene.World, target, TimeSpan.FromMilliseconds(520));
-        }
-        else
-        {
-            _scene.World.TransformMatrix = target;
-        }
-
-        SortEngine2Depth(camera);
-        if (_labelsVisible)
-        {
-            LayoutLabels();
-        }
+        _scene.Backdrop.Size = new Vector2((float)ActualWidth, (float)ActualHeight);
+        _cameraRig.Resize(ActualWidth, ActualHeight, FocusPadding);
+        _cameraRig.FlyTo(_yaw, _pitch, _distance, animate);
+        _scene.DepthOrder.Update(CurrentCamera());
     }
 
-    private void SortEngine2Depth(StageCamera camera)
-    {
-        if (_scene is null)
-        {
-            return;
-        }
-
-        var eye = camera.TargetWorld + camera.Distance * new Vector3(
-            MathF.Cos(camera.Pitch) * MathF.Cos(camera.Yaw),
-            MathF.Sin(camera.Pitch),
-            MathF.Cos(camera.Pitch) * MathF.Sin(camera.Yaw));
-        var forward = Vector3.Normalize(camera.TargetWorld - eye);
-        // ShapeVisual siblings have no depth buffer; additive-like translucency is forgiving, but keep near Engine 2 modules on top.
-        foreach (var item in _scene.SubContainers.Select((container, index) => new
-        {
-            Container = container,
-            Depth = Vector3.Dot(StageMath.FromUnit(_scene.SubExplodedCentersUnit[index]) - eye, forward),
-        }).OrderByDescending(i => i.Depth))
-        {
-            _scene.Engine2.Children.Remove(item.Container);
-            _scene.Engine2.Children.InsertAtTop(item.Container);
-        }
-    }
     private void FlyCamera(float yaw, float pitch, float distance)
     {
         StopIdle();
+        ShowLabels(false);
         _yaw = NearestAngle(yaw);
         _pitch = Math.Clamp(pitch, -0.1f, 1.2f);
         _distance = Math.Clamp(distance, 8f, 80f);
         _lastInteraction = Environment.TickCount64 / 1000.0;
         ApplyCamera(true);
+        if (IsExploded)
+        {
+            QueueLabels(TimeSpan.FromMilliseconds(620));
+        }
     }
 
     private float NearestAngle(float goal) => goal + MathF.Tau * MathF.Round((_yaw - goal) / MathF.Tau);
@@ -313,11 +259,22 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
     private void ShowLabels(bool show)
     {
         _labelsVisible = show;
-        LabelLayer.Opacity = show ? 1 : 0;
         if (show)
         {
             LayoutLabels();
         }
+
+        var visual = ElementCompositionPreview.GetElementVisual(LabelLayer);
+        if (!_animationsEnabled)
+        {
+            LabelLayer.Opacity = show ? 1 : 0;
+            return;
+        }
+
+        var animation = visual.Compositor.CreateScalarKeyFrameAnimation();
+        animation.InsertKeyFrame(1, show ? 1f : 0f);
+        animation.Duration = TimeSpan.FromMilliseconds(show ? 180 : 90);
+        visual.StartAnimation("Opacity", animation);
     }
 
     private void LayoutLabels()
@@ -350,12 +307,24 @@ public sealed partial class CompositionAircraftStage : UserControl, IAircraftSta
 
             var up = sub.LabelUp ? -1 : 1;
             var textPoint = new Point(p.X + 48, p.Y + up * 34);
-            var line = new Line { X1 = p.X, Y1 = p.Y, X2 = textPoint.X - 6, Y2 = textPoint.Y + 8, StrokeThickness = 1, Stroke = new SolidColorBrush(_palette.Label.Color), Opacity = 0.78 };
-            var text = new TextBlock { Text = sub.Label, FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(_palette.Label.Color), CharacterSpacing = 110 };
+            var line = new Line { X1 = p.X, Y1 = p.Y, X2 = textPoint.X - 6, Y2 = textPoint.Y + 8, StrokeThickness = 1, Stroke = new SolidColorBrush(_palette.LabelColor), Opacity = 0.78 };
+            var text = new TextBlock { Text = sub.Label, FontSize = 11, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = new SolidColorBrush(_palette.LabelColor), CharacterSpacing = 110 };
             Canvas.SetLeft(text, textPoint.X);
             Canvas.SetTop(text, textPoint.Y);
             LabelLayer.Children.Add(line);
             LabelLayer.Children.Add(text);
+        }
+    }
+
+    private static void LogStageError(string where, Exception ex)
+    {
+        try
+        {
+            var path = System.IO.Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "stage-error.log");
+            System.IO.File.AppendAllText(path, $"{DateTime.Now:O} {where}\n{ex}\nInner: {ex.InnerException}\n\n");
+        }
+        catch
+        {
         }
     }
 }

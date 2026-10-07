@@ -20,9 +20,10 @@ internal static class StagePerf
         return count;
     }
 
-    public static void Report(string label, Visual root, double buildMs)
+    public static void Report(string label, Visual root, double buildMs, double bakeMs = 0, int cached = 0, int baked = 0)
     {
-        var line = $"{DateTime.Now:O} [{label}] visuals={CountVisuals(root)} build={buildMs:F1}ms";
+        var suffix = bakeMs > 0 || cached > 0 || baked > 0 ? $" bake={bakeMs:F1}ms cached={cached} baked={baked}" : string.Empty;
+        var line = $"{DateTime.Now:O} [{label}] visuals={CountVisuals(root)} build={buildMs:F1}ms{suffix}";
         Debug.WriteLine($"[CompositionStage] {line}");
         try
         {
