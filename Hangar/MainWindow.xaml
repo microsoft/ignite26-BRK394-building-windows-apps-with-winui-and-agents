@@ -53,7 +53,7 @@
                     AutomationProperties.AutomationId="GlobalSearchBox"
                     AutomationProperties.Name="Search tail, part, or work order"
                     ItemsSource="{x:Bind ViewModel.Suggestions, Mode=OneWay}"
-                    Text="Search tail, part, or work order"
+                    PlaceholderText="Search tail, part, or work order"
                     QueryIcon="Find"
                     QuerySubmitted="OnSearchQuerySubmitted"
                     TextChanged="OnSearchTextChanged"
@@ -175,7 +175,6 @@
             x:Name="NavView"
             Grid.Row="1"
             AutomationProperties.AutomationId="MainNavigation"
-            HighContrastAdjustment="None"
             IsBackButtonVisible="Collapsed"
             IsPaneToggleButtonVisible="False"
             IsSettingsVisible="False"
@@ -187,47 +186,29 @@
                 <NavigationViewItem
                     AutomationProperties.AutomationId="NavFleet"
                     Content="Fleet"
-                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
-                    Tag="Fleet">
-                    <helpers:NavItemIconHelper.UnselectedIcon>
-                        <FontIcon Glyph="&#xE709;" />
-                    </helpers:NavItemIconHelper.UnselectedIcon>
-                    <helpers:NavItemIconHelper.SelectedIcon>
-                        <FontIcon Glyph="&#xE709;" />
-                    </helpers:NavItemIconHelper.SelectedIcon>
+                    Tag="Fleet"
+                    ToolTipService.ToolTip="Fleet">
                     <NavigationViewItem.Icon>
-                        <FontIcon Opacity="0" Glyph="&#xE709;" />
+                        <FontIcon Glyph="&#xE709;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
                     AutomationProperties.AutomationId="NavAircraft"
                     Content="Aircraft"
-                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
-                    Tag="Aircraft">
-                    <helpers:NavItemIconHelper.UnselectedIcon>
-                        <FontIcon Glyph="&#xF158;" />
-                    </helpers:NavItemIconHelper.UnselectedIcon>
-                    <helpers:NavItemIconHelper.SelectedIcon>
-                        <FontIcon Glyph="&#xF158;" />
-                    </helpers:NavItemIconHelper.SelectedIcon>
+                    Tag="Aircraft"
+                    ToolTipService.ToolTip="Aircraft">
                     <NavigationViewItem.Icon>
-                        <FontIcon Opacity="0" Glyph="&#xF158;" />
+                        <FontIcon Glyph="&#xF158;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem
                     x:Name="NavWorkOrdersItem"
                     AutomationProperties.AutomationId="NavWorkOrders"
                     Content="Work Orders"
-                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
-                    Tag="WorkOrders">
-                    <helpers:NavItemIconHelper.UnselectedIcon>
-                        <FontIcon Glyph="&#xE9F9;" />
-                    </helpers:NavItemIconHelper.UnselectedIcon>
-                    <helpers:NavItemIconHelper.SelectedIcon>
-                        <FontIcon Glyph="&#xE9F9;" />
-                    </helpers:NavItemIconHelper.SelectedIcon>
+                    Tag="WorkOrders"
+                    ToolTipService.ToolTip="Work Orders">
                     <NavigationViewItem.Icon>
-                        <FontIcon Opacity="0" Glyph="&#xE9F9;" />
+                        <FontIcon Glyph="&#xE9F9;" />
                     </NavigationViewItem.Icon>
                     <NavigationViewItem.InfoBadge>
                         <InfoBadge x:Name="WorkOrderBadge" Visibility="Collapsed" />
@@ -236,16 +217,10 @@
                 <NavigationViewItem
                     AutomationProperties.AutomationId="NavInspections"
                     Content="Inspections"
-                    helpers:NavItemIconHelper.StaticIconVisibility="Visible"
-                    Tag="Inspections">
-                    <helpers:NavItemIconHelper.UnselectedIcon>
-                        <FontIcon Glyph="&#xEDC6;" />
-                    </helpers:NavItemIconHelper.UnselectedIcon>
-                    <helpers:NavItemIconHelper.SelectedIcon>
-                        <FontIcon Glyph="&#xEDC6;" />
-                    </helpers:NavItemIconHelper.SelectedIcon>
+                    Tag="Inspections"
+                    ToolTipService.ToolTip="Inspections">
                     <NavigationViewItem.Icon>
-                        <FontIcon Opacity="0" Glyph="&#xEDC6;" />
+                        <FontIcon Glyph="&#xEDC6;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
             </NavigationView.MenuItems>
