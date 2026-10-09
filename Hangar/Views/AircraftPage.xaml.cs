@@ -6,7 +6,11 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Charts;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Windows.Foundation;
+using Windows.System;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Shapes;
 
@@ -24,6 +28,8 @@ public sealed partial class AircraftPage : Page
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         ActualThemeChanged += (_, _) => RenderAll();
+        PreviewKeyDown += OnPagePreviewKeyDown;
+        LayoutUpdated += (_, _) => UpdateGlobeSlots();
     }
 
     public FleetDataService Data => FleetDataService.Instance;
@@ -95,6 +101,7 @@ public sealed partial class AircraftPage : Page
 
     private void ResetState()
     {
+        CollapseGlobe(focusStage: false);
         Scrubber.Value = Flights - 1;
         Stage.SetExploded(false);
         Stage.Select(EnginePart.None);
@@ -124,6 +131,8 @@ public sealed partial class AircraftPage : Page
         NextCheckText.Text = $"{hero.DaysToNextCheck} d";
         NextCheckKind.Text = hero.NextCheck;
         StationText.Text = hero.Station;
+        AirborneText.Text = $"{Data.AirborneCount} airborne";
+        LegendAirborneText.Text = $"Airborne fleet ({Data.AirborneCount})";
         RenderStatus();
         RenderChart();
         RenderPart(Stage.SelectedPart);
@@ -163,7 +172,13 @@ public sealed partial class AircraftPage : Page
             f.Line(amber, "AttentionBrush", 3, StrokeDashStyle.Solid, "Excursion");
         }
 
-        f.Marker(index, value, over ? "AttentionBrush" : "AccentCyanBrush", MarkerShape.Circle, $"Flight {index + 1}");
+        // Flight 44 (DEN → SEA) carries the hail crew report: pin it once the scrubber has passed it.
+        if (index > FleetDataService.HailFlightIndex)
+        {
+            f.Marker(FleetDataService.HailFlightIndex, vib[FleetDataService.HailFlightIndex], "AttentionBrush", MarkerShape.Diamond, "Flight 44 · hail encounter on climb");
+        }
+
+        f.Marker(index, value, over ? "AttentionBrush" : "AccentCyanBrush", index == FleetDataService.HailFlightIndex ? MarkerShape.Diamond : MarkerShape.Circle, $"Flight {index + 1}");
 
         ScrubValueText.Text = value.ToString("0.00");
         ScrubValueText.Foreground = ThemeRes.Brush(this, over ? "AttentionBrush" : "AccentCyanBrush");
@@ -174,6 +189,9 @@ public sealed partial class AircraftPage : Page
 
         // Heat overlay tracks vibration: cool below 1.0 ips, fully hot at the 2.31 spike.
         Stage.SetHeat(Math.Clamp((value - 1.0) / (vib.Max() - 1.0), 0, 1));
+
+        Globe.SetFlight(index + 1);
+        UpdateHailCallout();
     }
 
     private void OnScrubberChanged(object sender, RangeBaseValueChangedEventArgs e)
@@ -306,4 +324,244 @@ public sealed partial class AircraftPage : Page
     }
 
     private void OnResetViewClick(object sender, RoutedEventArgs e) => Stage.ResetView();
+
+    // ───────────────────────── Fleet globe ─────────────────────────
+
+    private Rect _compactSlot;
+    private Rect _expandedSlot;
+    private double _globeProgress;
+    private CompositeTransform? _stageTransform;
+    private bool _globeDragging;
+
+    /// <summary>Programmatically scrub CA 2207's history to a 1-based flight (e.g. from an "Ask Hangar" citation chip).</summary>
+    public void ScrubToFlight(int flight) => Scrubber.Value = Math.Clamp(flight, 1, Flights) - 1;
+
+    /// <summary>Expand the fleet globe to fill the stage.</summary>
+    public void ExpandGlobe()
+    {
+        if (Globe.IsExpanded)
+        {
+            return;
+        }
+
+        Globe.SetExpanded(true);
+        GlobeBackButton.Visibility = Visibility.Visible;
+        GlobeBackButton.Focus(FocusState.Programmatic);
+    }
+
+    /// <summary>Collapse the globe back into its card and dive back into the aircraft.</summary>
+    public void CollapseGlobe(bool focusStage = true)
+    {
+        Globe.SetExpanded(false);
+        if (focusStage)
+        {
+            Stage.Focus(FocusState.Programmatic);
+        }
+    }
+
+    private void UpdateGlobeSlots()
+    {
+        double w = RootGrid.ActualWidth, h = RootGrid.ActualHeight;
+        if (w < 1 || h < 1 || GlobeSlot.ActualWidth < 1 || GlobeSlot.ActualHeight < 1)
+        {
+            return;
+        }
+
+        var compact = GlobeSlot.TransformToVisual(Globe).TransformBounds(new Rect(0, 0, GlobeSlot.ActualWidth, GlobeSlot.ActualHeight));
+        var expanded = new Rect(404, 110, Math.Max(200, w - 908), Math.Max(200, h - 220));
+
+        if (compact != _compactSlot || expanded != _expandedSlot)
+        {
+            _compactSlot = compact;
+            _expandedSlot = expanded;
+            Globe.SetSlots(compact, expanded);
+            UpdateHailCallout();
+        }
+    }
+
+    private void UpdateHailCallout()
+    {
+        bool show = ScrubIndex == FleetDataService.HailFlightIndex;
+        double p = _globeProgress;
+
+        // Compact: caption row inside the card, under the globe. Expanded: chip at the top of the globe stage.
+        HailCaption.Opacity = show ? 1 - p : 0;
+        AutomationProperties.SetAccessibilityView(HailCaption, show && p < 0.5 ? Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Content : Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+
+        bool chip = show && p > 0.01;
+        HailCallout.Opacity = chip ? p : 0;
+        HailCallout.Visibility = chip ? Visibility.Visible : Visibility.Collapsed;
+        AutomationProperties.SetAccessibilityView(HailCallout, chip && p >= 0.5 ? Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Content : Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+        if (!chip || _expandedSlot.Width < 1)
+        {
+            return;
+        }
+
+        HailCallout.MaxWidth = Math.Max(160, _expandedSlot.Width);
+        HailCallout.Measure(new Size(HailCallout.MaxWidth, double.PositiveInfinity));
+        double cw = HailCallout.DesiredSize.Width;
+
+        // Keep the chip clear of the "N2207C" header and status pill at any width.
+        double headerBottom = 0;
+        foreach (var el in new FrameworkElement[] { HeaderTail, StatusPill })
+        {
+            if (el.ActualHeight > 0)
+            {
+                var b = el.TransformToVisual(RootGrid).TransformBounds(new Rect(0, 0, el.ActualWidth, el.ActualHeight));
+                headerBottom = Math.Max(headerBottom, b.Bottom);
+            }
+        }
+
+        HailCalloutShift.X = _expandedSlot.X + (_expandedSlot.Width - cw) / 2;
+        HailCalloutShift.Y = Math.Max(_expandedSlot.Y + 4, headerBottom + 12);
+    }
+
+    private void OnGlobeExpandProgressChanged(object? sender, double p)
+    {
+        if (_stageTransform is null)
+        {
+            _stageTransform = new CompositeTransform();
+            Stage.RenderTransformOrigin = new Point(0.5, 0.5);
+            Stage.RenderTransform = _stageTransform;
+        }
+
+        // The hologram shrinks and fades toward CA 2207's parked location at SEA on the expanded globe.
+        var sea = Globe.ExpandedPointOf("SEA");
+        double sx = Stage.ActualWidth / 2, sy = Stage.ActualHeight / 2;
+        double scale = 1 - 0.85 * p;
+        _stageTransform.ScaleX = scale;
+        _stageTransform.ScaleY = scale;
+        _stageTransform.TranslateX = (sea.X - sx) * p;
+        _stageTransform.TranslateY = (sea.Y - sy) * p;
+        Stage.Opacity = Math.Clamp(1 - p * 1.4, 0, 1);
+        Stage.IsHitTestVisible = p < 0.5;
+
+        GlobeBackButton.Opacity = p;
+        GlobeBackButton.Visibility = p > 0.01 || Globe.IsExpanded ? Visibility.Visible : Visibility.Collapsed;
+        GlobeInput.IsHitTestVisible = p > 0.5;
+        GlobeCard.Opacity = 1;
+
+        // In the expanded state the card trades its mini globe for a legend + FLT 44 detail.
+        _globeProgress = p;
+        GlobeExpandedPanel.Opacity = Math.Clamp((p - 0.3) / 0.7, 0, 1);
+        GlobeExpandedPanel.Visibility = p > 0.01 ? Visibility.Visible : Visibility.Collapsed;
+        GlobeHint.Opacity = 1 - p;
+        UpdateHailCallout();
+    }
+
+    private void OnPagePreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.OriginalSource is TextBox)
+        {
+            return;
+        }
+
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+            .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+        if (ctrl)
+        {
+            return;
+        }
+
+        if (!Globe.IsExpanded)
+        {
+            if (e.Key == VirtualKey.G)
+            {
+                ExpandGlobe();
+                e.Handled = true;
+            }
+
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case VirtualKey.Escape:
+            case VirtualKey.G:
+                CollapseGlobe();
+                break;
+            case VirtualKey.Left:
+                Globe.Spin(-10, 0);
+                break;
+            case VirtualKey.Right:
+                Globe.Spin(10, 0);
+                break;
+            case VirtualKey.Up:
+                Globe.Spin(0, 8);
+                break;
+            case VirtualKey.Down:
+                Globe.Spin(0, -8);
+                break;
+            case VirtualKey.Add:
+            case (VirtualKey)0xBB:
+                Globe.ZoomBy(120);
+                break;
+            case VirtualKey.Subtract:
+            case (VirtualKey)0xBD:
+                Globe.ZoomBy(-120);
+                break;
+            case VirtualKey.Home:
+                Globe.ResetView();
+                break;
+            default:
+                return;
+        }
+
+        e.Handled = true;
+    }
+
+    private void OnGlobeCardKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key is VirtualKey.Enter or VirtualKey.Space)
+        {
+            ExpandGlobe();
+            e.Handled = true;
+        }
+    }
+
+    private void OnGlobeCardPointerEntered(object sender, PointerRoutedEventArgs e) => GlobeHint.Opacity = 1;
+
+    private void OnGlobeCardPointerExited(object sender, PointerRoutedEventArgs e) => GlobeHint.Opacity = 0;
+
+    private void OnGlobeCardTapped(object sender, TappedRoutedEventArgs e)
+    {
+        ExpandGlobe();
+        e.Handled = true;
+    }
+
+    private void OnGlobePointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        _globeDragging = GlobeInput.CapturePointer(e.Pointer);
+        Globe.BeginDrag(e.GetCurrentPoint(Globe).Position);
+        e.Handled = true;
+    }
+
+    private void OnGlobePointerMoved(object sender, PointerRoutedEventArgs e)
+    {
+        if (_globeDragging)
+        {
+            Globe.Drag(e.GetCurrentPoint(Globe).Position);
+            e.Handled = true;
+        }
+    }
+
+    private void OnGlobePointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (!_globeDragging)
+        {
+            return;
+        }
+
+        _globeDragging = false;
+        Globe.EndDrag();
+        GlobeInput.ReleasePointerCapture(e.Pointer);
+    }
+
+    private void OnGlobePointerWheel(object sender, PointerRoutedEventArgs e)
+    {
+        Globe.ZoomBy(e.GetCurrentPoint(Globe).Properties.MouseWheelDelta);
+        e.Handled = true;
+    }
+
+    private void OnGlobeBackClick(object sender, RoutedEventArgs e) => CollapseGlobe();
 }

@@ -54,8 +54,73 @@ public sealed class FleetDataService
     public static readonly DateTime Now = new(2026, 11, 18, 2, 40, 0);
     public static readonly DateTime Departure = new(2026, 11, 18, 6, 15, 0);
 
+    /// <summary>Network airports (real lat/lon, degrees).</summary>
+    public static readonly IReadOnlyDictionary<string, Airport> Airports = new Dictionary<string, Airport>
+    {
+        ["SEA"] = new("SEA", 47.449, -122.309),
+        ["PDX"] = new("PDX", 45.589, -122.597),
+        ["YVR"] = new("YVR", 49.195, -123.184),
+        ["ANC"] = new("ANC", 61.174, -149.996),
+        ["HNL"] = new("HNL", 21.319, -157.922),
+        ["SFO"] = new("SFO", 37.619, -122.375),
+        ["LAX"] = new("LAX", 33.942, -118.408),
+        ["LAS"] = new("LAS", 36.084, -115.153),
+        ["PHX"] = new("PHX", 33.437, -112.008),
+        ["DEN"] = new("DEN", 39.856, -104.674),
+        ["DFW"] = new("DFW", 32.897, -97.038),
+        ["MSP"] = new("MSP", 44.885, -93.222),
+        ["ORD"] = new("ORD", 41.979, -87.905),
+        ["ATL"] = new("ATL", 33.641, -84.427),
+        ["MIA"] = new("MIA", 25.796, -80.287),
+        ["IAD"] = new("IAD", 38.953, -77.456),
+        ["JFK"] = new("JFK", 40.641, -73.778),
+        ["BOS"] = new("BOS", 42.366, -71.010),
+    };
+
+    // CA 2207 itinerary: stop[i] -> stop[i + 1] is flight i + 1. Flight 44 is DEN -> SEA (hail).
+    private static readonly string[] HeroStops =
+    [
+        "SEA", "LAX", "SEA", "ANC", "SEA", "JFK", "SEA", "SFO", "HNL", "SFO",
+        "SEA", "ORD", "SEA", "DEN", "PHX", "SEA", "BOS", "SEA", "LAS", "SEA",
+        "MSP", "SEA", "ATL", "SEA", "IAD", "SEA", "DFW", "SEA", "MIA", "SEA",
+        "HNL", "SEA", "LAX", "DEN", "SEA", "JFK", "SEA", "SFO", "SEA", "ORD",
+        "SEA", "PHX", "SEA", "DEN", "SEA", "BOS", "SEA", "LAX", "SEA", "ANC",
+        "SEA",
+    ];
+
+    public const int HailFlight = 44;
+
+    /// <summary>Zero-based scrubber index of <see cref="HailFlight"/>.</summary>
+    public const int HailFlightIndex = HailFlight - 1;
+    public const string HailReport = "Hail encounter on climb, FL190";
+
+    // Red-eyes in the air at 02:40 PT: (from, to, progress at 02:40, demo seconds to arrival from 0).
+    private static readonly (string From, string To, double P0, double Duration)[] RedEyes =
+    [
+        ("SEA", "JFK", 0.42, 7200), ("LAX", "BOS", 0.55, 6600), ("SFO", "ATL", 0.48, 7000),
+        ("HNL", "SFO", 0.63, 6000), ("ANC", "SEA", 0.71, 5400), ("LAS", "MIA", 0.37, 7800),
+        ("PHX", "IAD", 0.52, 6900), ("SFO", "ORD", 0.66, 5800), ("DEN", "BOS", 0.29, 8000),
+        ("PDX", "DFW", 0.58, 6300), ("LAX", "JFK", 0.33, 8200), ("SEA", "MIA", 0.24, 8600),
+    ];
+
     // Declared after all static seed tables so they are initialized first.
     public static FleetDataService Instance { get; } = new();
+
+    /// <summary>CA 2207's last 50 legs (flight 1..50), chained, ending at SEA.</summary>
+    public IReadOnlyList<FlightLeg> Legs { get; private set; } = [];
+
+    /// <summary>Every aircraft's position at 02:40 PT: ~12 airborne red-eyes, the rest parked.</summary>
+    public IReadOnlyList<LiveFlight> LiveFlights { get; private set; } = [];
+
+    public int AirborneCount => LiveFlights.Count(f => f.IsAirborne);
+
+    private readonly System.Diagnostics.Stopwatch _networkClock = new();
+
+    /// <summary>Route progress 0..1 for an airborne flight; advances slowly in real time from demo reset.</summary>
+    public double Progress(LiveFlight flight) =>
+        flight.IsAirborne
+            ? Math.Clamp(flight.P0 + _networkClock.Elapsed.TotalSeconds / flight.DurationSeconds, 0, 1)
+            : 0;
 
     public ObservableCollection<Aircraft> Fleet { get; } = [];
 
@@ -156,7 +221,40 @@ public sealed class FleetDataService
         SeedFleet(rng);
         SeedWorkOrders(rng);
         SeedTelemetry(rng);
+        SeedNetwork();
         SignOffWorkOrder = null;
+    }
+
+    private void SeedNetwork()
+    {
+        var legs = new FlightLeg[50];
+        for (int i = 0; i < 50; i++)
+        {
+            legs[i] = new FlightLeg(i + 1, HeroStops[i], HeroStops[i + 1], Vibration[i],
+                i + 1 == HailFlight ? HailReport : null);
+        }
+
+        Legs = legs;
+
+        var live = new List<LiveFlight>(Fleet.Count);
+        int airborne = 0;
+        foreach (var aircraft in Fleet)
+        {
+            bool hero = aircraft.Tail == HeroTail;
+            if (!hero && aircraft.Status == AircraftStatus.Healthy && airborne < RedEyes.Length)
+            {
+                var r = RedEyes[airborne++];
+                live.Add(new LiveFlight(aircraft.Tail, r.From, r.To, r.P0, r.Duration, true, false));
+            }
+            else
+            {
+                var station = hero ? "SEA" : aircraft.Station;
+                live.Add(new LiveFlight(aircraft.Tail, station, station, 0, 1, false, hero));
+            }
+        }
+
+        LiveFlights = live;
+        _networkClock.Restart();
     }
 
     private void SeedFleet(Random rng)
@@ -296,12 +394,16 @@ public sealed class FleetDataService
         for (int i = 0; i < 50; i++)
         {
             avg[i] = 0.95 + Math.Sin(i / 7.0) * 0.05;
-            vib[i] = Math.Round(0.9 + rng.NextDouble() * 0.35 + Math.Sin(i / 5.0) * 0.08, 2);
+            vib[i] = Math.Round(0.86 + rng.NextDouble() * 0.2 + Math.Sin(i / 5.0) * 0.05, 2);
         }
 
-        vib[46] = 1.42;
-        vib[47] = 1.61;
-        vib[48] = 1.74;
+        // Flight 44 (DEN -> SEA, hail on climb) is the step change; it trends up to 2.31 at flight 50.
+        vib[43] = 1.32;
+        vib[44] = 1.38;
+        vib[45] = 1.47;
+        vib[46] = 1.58;
+        vib[47] = 1.69;
+        vib[48] = 1.79;
         vib[49] = 2.31;
         Vibration = vib;
         FleetAverageVibration = avg;

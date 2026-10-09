@@ -28,6 +28,7 @@
     <Content Include="Assets\AppIcon.ico" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <Content Include="Assets\Inspection\borescope.png" />
+    <EmbeddedResource Include="Assets\Globe\land-dots.bin" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="Hangar.Views.AircraftPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,7 +12,7 @@
             <Setter Property="FontSize" Value="11" />
         </Style>
         <Style x:Key="VitalValueStyle" TargetType="TextBlock" BasedOn="{StaticResource KpiValueTextStyle}">
-            <Setter Property="FontSize" Value="26" />
+            <Setter Property="FontSize" Value="22" />
         </Style>
         <Style x:Key="PartChipStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
             <Setter Property="CornerRadius" Value="{StaticResource PillCornerRadius}" />
@@ -68,16 +68,20 @@
                 </StackPanel>
             </StackPanel>
 
-            <!--  Left glass: vitals  -->
+            <!--  Left column: vitals + network globe card  -->
+            <Grid x:Name="LeftColumn" Grid.Row="1" RowSpacing="16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
             <Border
-                Grid.Row="1"
                 VerticalAlignment="Top"
                 AutomationProperties.AutomationId="AircraftVitalsPanel"
                 AutomationProperties.Name="Aircraft vitals"
                 Style="{StaticResource GlassPanelStyle}">
-                <StackPanel Padding="24" Spacing="20">
+                <StackPanel Padding="20,16,20,18" Spacing="10">
                     <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Vitals" />
-                    <Grid ColumnSpacing="16" RowSpacing="18">
+                    <Grid ColumnSpacing="16" RowSpacing="8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
@@ -108,7 +112,7 @@
 
                     <Rectangle Height="1" Fill="{ThemeResource GlassStrokeBrush}" />
 
-                    <StackPanel Spacing="10">
+                    <StackPanel Spacing="6">
                         <TextBlock Style="{StaticResource VitalLabelStyle}" Text="ENGINE 2 · LEAP-1A" />
                         <Grid ColumnSpacing="8">
                             <Grid.ColumnDefinitions>
@@ -147,7 +151,7 @@
                         AutomationProperties.AutomationId="AircraftWorkOrdersButton"
                         Click="OnWorkOrdersClick"
                         CornerRadius="{StaticResource PillCornerRadius}"
-                        Padding="16,10">
+                        Padding="16,8">
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <FontIcon FontSize="14" Glyph="&#xE9D5;" />
                             <TextBlock x:Name="WorkOrdersButtonText" Text="Engine 2 work orders" />
@@ -155,6 +159,120 @@
                     </Button>
                 </StackPanel>
             </Border>
+
+            <!--  Compact network globe card: the globe itself renders in the full-bleed overlay below, aligned to GlobeSlot  -->
+            <Border
+                x:Name="GlobeCard"
+                Grid.Row="1"
+                MinHeight="240"
+                MaxHeight="360"
+                VerticalAlignment="Stretch"
+                AutomationProperties.AutomationId="GlobeCard"
+                AutomationProperties.Name="Fleet network globe. Press G or Enter to expand"
+                IsTabStop="True"
+                KeyDown="OnGlobeCardKeyDown"
+                PointerEntered="OnGlobeCardPointerEntered"
+                PointerExited="OnGlobeCardPointerExited"
+                Style="{StaticResource GlassPanelStyle}"
+                Tapped="OnGlobeCardTapped"
+                UseSystemFocusVisuals="True">
+                <Grid Padding="24,18,24,18" RowSpacing="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" MinHeight="160" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="NETWORK · 02:40 PT" />
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="6">
+                        <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{ThemeResource AccentCyanBrush}" />
+                        <TextBlock
+                            x:Name="AirborneText"
+                            VerticalAlignment="Center"
+                            Foreground="{ThemeResource SecondaryTextBrush}"
+                            Style="{StaticResource MonoTextStyle}"
+                            FontSize="12"
+                            Text="12 airborne" />
+                    </StackPanel>
+                    <Border x:Name="GlobeSlot" Grid.Row="1" />
+                    <TextBlock
+                        x:Name="GlobeHint"
+                        Grid.Row="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Foreground="{ThemeResource TertiaryTextBrush}"
+                        Style="{StaticResource MonoTextStyle}"
+                        FontSize="11"
+                        Opacity="0"
+                        Text="G · expand" />
+
+                    <!--  Compact caption for the flight-44 crew report: own row, never overlays the header  -->
+                    <StackPanel
+                        x:Name="HailCaption"
+                        Grid.Row="2"
+                        AutomationProperties.AutomationId="HailCaption"
+                        AutomationProperties.Name="Flight 44, Denver to Seattle. Crew report: hail encounter on climb, flight level 190"
+                        Opacity="0"
+                        Spacing="2"
+                        ToolTipService.ToolTip="FLT 44 · DEN → SEA · Crew report: hail encounter on climb, FL190">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{ThemeResource AttentionBrush}" />
+                            <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{ThemeResource PrimaryTextBrush}" Text="FLT 44 · DEN → SEA" />
+                        </StackPanel>
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource SecondaryTextBrush}"
+                            MaxLines="1"
+                            Text="Crew report: hail encounter on climb, FL190"
+                            TextTrimming="CharacterEllipsis"
+                            TextWrapping="NoWrap" />
+                    </StackPanel>
+
+                    <!--  Expanded state: legend + FLT 44 detail fill the card while the globe owns the stage  -->
+                    <StackPanel
+                        x:Name="GlobeExpandedPanel"
+                        Grid.Row="1"
+                        Grid.RowSpan="2"
+                        AutomationProperties.AutomationId="GlobeExpandedPanel"
+                        Opacity="0"
+                        Spacing="14"
+                        Visibility="Collapsed">
+                        <StackPanel Spacing="8">
+                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="LEGEND" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{ThemeResource AttentionBrush}" />
+                                <TextBlock FontSize="13" Foreground="{ThemeResource PrimaryTextBrush}" Text="CA 2207 · parked SEA" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{ThemeResource AccentCyanBrush}" />
+                                <TextBlock x:Name="LegendAirborneText" FontSize="13" Foreground="{ThemeResource PrimaryTextBrush}" Text="Airborne fleet (12)" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Rectangle Width="14" Height="3" VerticalAlignment="Center" Fill="{ThemeResource CriticalBrush}" RadiusX="1.5" RadiusY="1.5" />
+                                <TextBlock FontSize="13" Foreground="{ThemeResource PrimaryTextBrush}" Text="FLT 44 hail event" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Rectangle Height="1" Fill="{ThemeResource GlassStrokeBrush}" />
+                        <StackPanel Spacing="6">
+                            <TextBlock Style="{StaticResource EyebrowTextStyle}" Text="FLT 44 · CREW REPORT" />
+                            <TextBlock FontSize="15" FontWeight="SemiBold" Foreground="{ThemeResource PrimaryTextBrush}" Text="DEN → SEA · FL190" />
+                            <TextBlock
+                                FontSize="13"
+                                Foreground="{ThemeResource SecondaryTextBrush}"
+                                Text="Hail encounter on climb, FL190."
+                                TextWrapping="WrapWholeWords" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Ellipse Width="6" Height="6" VerticalAlignment="Center" Fill="{ThemeResource AttentionBrush}" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{ThemeResource AttentionBrush}"
+                                    Style="{StaticResource MonoTextStyle}"
+                                    Text="N1 VIB 1.32 IPS · STEP CHANGE" />
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            </Grid>
 
             <!--  Right glass: Engine 2 vibration chart  -->
             <Border
@@ -311,5 +429,68 @@
                 </StackPanel>
             </Border>
         </Grid>
+
+        <!--  Fleet globe: one full-bleed render surface that animates between the card slot and the stage  -->
+        <controls:FleetGlobe x:Name="Globe" ExpandProgressChanged="OnGlobeExpandProgressChanged" />
+
+        <!--  Input layer for the expanded globe (drag to spin, wheel to zoom); hit-testable only while expanded  -->
+        <Border
+            x:Name="GlobeInput"
+            Background="Transparent"
+            IsHitTestVisible="False"
+            PointerCanceled="OnGlobePointerReleased"
+            PointerCaptureLost="OnGlobePointerReleased"
+            PointerMoved="OnGlobePointerMoved"
+            PointerPressed="OnGlobePointerPressed"
+            PointerReleased="OnGlobePointerReleased"
+            PointerWheelChanged="OnGlobePointerWheel" />
+
+        <!--  Flight 44 crew report callout  -->
+        <Border
+            x:Name="HailCallout"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            AutomationProperties.AutomationId="HailCallout"
+            AutomationProperties.LiveSetting="Polite"
+            AutomationProperties.Name="Flight 44, Denver to Seattle. Crew report: hail encounter on climb, flight level 190"
+            IsHitTestVisible="False"
+            Opacity="0"
+            Style="{StaticResource PillBorderStyle}">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="HailCalloutShift" />
+            </Border.RenderTransform>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{ThemeResource AttentionBrush}" />
+                <TextBlock
+                    x:Name="HailCalloutText"
+                    MaxLines="1"
+                    Style="{StaticResource PillTextStyle}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap">
+                    <Run FontWeight="SemiBold" Text="FLT 44 · DEN → SEA" />
+                    <Run Foreground="{ThemeResource SecondaryTextBrush}" Text=" · Crew report: hail encounter on climb, FL190" />
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!--  Back chip shown while the globe is expanded  -->
+        <Button
+            x:Name="GlobeBackButton"
+            Margin="0,0,0,110"
+            Padding="16,8"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Bottom"
+            AutomationProperties.AutomationId="GlobeBackButton"
+            AutomationProperties.Name="Back to aircraft"
+            Click="OnGlobeBackClick"
+            CornerRadius="{StaticResource PillCornerRadius}"
+            Opacity="0"
+            Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <FontIcon FontSize="12" Glyph="&#xE72B;" />
+                <TextBlock Text="Back to aircraft" />
+                <TextBlock Foreground="{ThemeResource TertiaryTextBrush}" Style="{StaticResource MonoTextStyle}" FontSize="12" Text="Esc" VerticalAlignment="Center" />
+            </StackPanel>
+        </Button>
     </Grid>
 </Page>

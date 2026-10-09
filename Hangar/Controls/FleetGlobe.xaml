@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="Hangar.Controls.FleetGlobe"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    AutomationProperties.AccessibilityView="Raw"
+    IsHitTestVisible="False"
+    IsTabStop="False">
+    <!--  Render-only surface. Input is routed in by the host (AircraftPage) so the canvas
+          can span the page and travel between the compact card and the stage.  -->
+    <canvas:CanvasControl x:Name="Canvas" ClearColor="Transparent" Draw="OnDraw" IsHitTestVisible="False" />
+</UserControl>
