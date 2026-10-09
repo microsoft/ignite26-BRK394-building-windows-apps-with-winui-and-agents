@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="Hangar.Controls.AskHangarPane"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    AutomationProperties.AutomationId="AskHangarPane"
+    AutomationProperties.LandmarkType="Custom"
+    AutomationProperties.LocalizedLandmarkType="Assistant"
+    AutomationProperties.Name="Ask Hangar"
+    IsTabStop="False"
+    TabFocusNavigation="Cycle"
+    Visibility="Collapsed">
+
+    <UserControl.Resources>
+        <!--  Styles for elements built in code: ThemeResource setters keep them theme-reactive.  -->
+        <Style x:Key="AskUserBubbleStyle" TargetType="Border">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="MaxWidth" Value="300" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="CornerRadius" Value="14,14,4,14" />
+            <Setter Property="Background" Value="{ThemeResource SurfaceHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource SurfaceStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style x:Key="AskUserTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource TextFontFamily}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="IsTextSelectionEnabled" Value="True" />
+            <Setter Property="Foreground" Value="{ThemeResource PrimaryTextBrush}" />
+        </Style>
+        <Style x:Key="AskAnswerTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource TextFontFamily}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="LineHeight" Value="21" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="IsTextSelectionEnabled" Value="True" />
+            <Setter Property="Foreground" Value="{ThemeResource PrimaryTextBrush}" />
+        </Style>
+        <Style x:Key="AskSparkStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0,1,0,0" />
+            <Setter Property="Foreground" Value="{ThemeResource AccentCyanBrush}" />
+        </Style>
+        <Style x:Key="AskMetaTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource MonoFontFamily}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{ThemeResource TertiaryTextBrush}" />
+        </Style>
+        <Style x:Key="AskDraftBorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource AccentCyanBrush}" />
+            <Setter Property="BorderThickness" Value="3,1,1,1" />
+        </Style>
+        <Style x:Key="AskDraftTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource MonoFontFamily}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="LineHeight" Value="19" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="IsTextSelectionEnabled" Value="True" />
+            <Setter Property="Foreground" Value="{ThemeResource PrimaryTextBrush}" />
+        </Style>
+        <Style x:Key="AskSkeletonStyle" TargetType="Rectangle">
+            <Setter Property="Height" Value="9" />
+            <Setter Property="RadiusX" Value="4.5" />
+            <Setter Property="RadiusY" Value="4.5" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Fill" Value="{ThemeResource AccentCyanSoftBrush}" />
+        </Style>
+        <Style x:Key="AskThinkingTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource MonoFontFamily}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource AccentCyanBrush}" />
+        </Style>
+        <Style x:Key="AskSignNoteTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource TextFontFamily}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{ThemeResource SecondaryTextBrush}" />
+        </Style>
+        <Style x:Key="AskChipButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="CornerRadius" Value="15" />
+            <Setter Property="FontFamily" Value="{StaticResource TextFontFamily}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Background" Value="{ThemeResource AccentCyanSoftBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource AccentCyanBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{ThemeResource PrimaryTextBrush}" />
+        </Style>
+        <Style x:Key="AskSuggestionButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="FontFamily" Value="{StaticResource TextFontFamily}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource SurfaceStrokeBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{ThemeResource PrimaryTextBrush}" />
+        </Style>
+
+        <Storyboard x:Key="OpenStoryboard">
+            <DoubleAnimation
+                EnableDependentAnimation="True"
+                Storyboard.TargetName="PaneHost"
+                Storyboard.TargetProperty="Width"
+                To="420"
+                Duration="0:0:0.25">
+                <DoubleAnimation.EasingFunction>
+                    <ExponentialEase EasingMode="EaseOut" Exponent="6" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation
+                Storyboard.TargetName="Slide"
+                Storyboard.TargetProperty="X"
+                To="0"
+                Duration="0:0:0.26">
+                <DoubleAnimation.EasingFunction>
+                    <ExponentialEase EasingMode="EaseOut" Exponent="6" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation
+                Storyboard.TargetName="PaneRoot"
+                Storyboard.TargetProperty="Opacity"
+                To="1"
+                Duration="0:0:0.16" />
+            <DoubleAnimation
+                Storyboard.TargetName="EdgeShadow"
+                Storyboard.TargetProperty="Opacity"
+                To="1"
+                Duration="0:0:0.2" />
+        </Storyboard>
+        <Storyboard x:Key="CloseStoryboard">
+            <DoubleAnimation
+                EnableDependentAnimation="True"
+                Storyboard.TargetName="PaneHost"
+                Storyboard.TargetProperty="Width"
+                To="0"
+                Duration="0:0:0.18">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation
+                Storyboard.TargetName="Slide"
+                Storyboard.TargetProperty="X"
+                To="24"
+                Duration="0:0:0.18">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation
+                BeginTime="0:0:0.06"
+                Storyboard.TargetName="PaneRoot"
+                Storyboard.TargetProperty="Opacity"
+                To="0"
+                Duration="0:0:0.12" />
+            <DoubleAnimation
+                Storyboard.TargetName="EdgeShadow"
+                Storyboard.TargetProperty="Opacity"
+                To="0"
+                Duration="0:0:0.12" />
+        </Storyboard>
+    </UserControl.Resources>
+
+    <!--  Inline column: PaneHost width animates 0 -> 420 so page content reflows beside it.  -->
+    <Grid
+        x:Name="PaneHost"
+        Width="0">
+        <!--  Soft edge shadow cast onto the page content, left of the divider.  -->
+        <Rectangle
+            x:Name="EdgeShadow"
+            Width="12"
+            Margin="-12,0,0,0"
+            HorizontalAlignment="Left"
+            Fill="{ThemeResource AskPaneEdgeShadowBrush}"
+            IsHitTestVisible="False"
+            Opacity="0" />
+    <Grid
+        x:Name="PaneRoot"
+        Width="420"
+        HorizontalAlignment="Left"
+        Background="{ThemeResource AskPaneBrush}"
+        BorderBrush="{ThemeResource AskPaneDividerBrush}"
+        BorderThickness="1,0,0,0"
+        Opacity="0"
+        PreviewKeyDown="OnPanePreviewKeyDown">
+        <Grid.RenderTransform>
+            <TranslateTransform x:Name="Slide" X="24" />
+        </Grid.RenderTransform>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Header  -->
+        <Grid Padding="20,16,12,12" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                VerticalAlignment="Center"
+                AutomationProperties.AccessibilityView="Raw"
+                FontSize="18"
+                Foreground="{ThemeResource AccentCyanBrush}"
+                Text="✦" />
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Spacing="4">
+                <TextBlock
+                    AutomationProperties.HeadingLevel="Level1"
+                    FontFamily="{StaticResource DisplayFontFamily}"
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource PrimaryTextBrush}"
+                    Text="Ask Hangar" />
+                <Border
+                    x:Name="ModePill"
+                    HorizontalAlignment="Left"
+                    AutomationProperties.AutomationId="AskModeBadge"
+                    Background="{ThemeResource NeutralSoftBrush}"
+                    BorderBrush="{ThemeResource NeutralStatusBrush}"
+                    Style="{StaticResource PillBorderStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Ellipse
+                            x:Name="ModeDot"
+                            Width="6"
+                            Height="6"
+                            VerticalAlignment="Center"
+                            Fill="{ThemeResource NeutralStatusBrush}" />
+                        <TextBlock
+                            x:Name="ModeLabel"
+                            Foreground="{ThemeResource NeutralStatusBrush}"
+                            Style="{StaticResource PillTextStyle}"
+                            Text="Demo responses" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <Button
+                x:Name="CloseButton"
+                Grid.Column="2"
+                Width="36"
+                Height="36"
+                Padding="0"
+                VerticalAlignment="Top"
+                AutomationProperties.AutomationId="AskCloseButton"
+                AutomationProperties.Name="Close Ask Hangar"
+                Background="Transparent"
+                BorderThickness="0"
+                Click="OnCloseClick"
+                ToolTipService.ToolTip="Close (Esc)">
+                <FontIcon FontSize="14" Glyph="&#xE711;" />
+            </Button>
+        </Grid>
+
+        <!--  Messages  -->
+        <ScrollViewer
+            x:Name="Scroller"
+            Grid.Row="1"
+            Padding="20,4,20,12"
+            HorizontalScrollMode="Disabled"
+            IsTabStop="False"
+            VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <StackPanel
+                    x:Name="EmptyState"
+                    Margin="0,24,0,0"
+                    Spacing="8">
+                    <TextBlock
+                        FontFamily="{StaticResource DisplayFontFamily}"
+                        FontSize="22"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource PrimaryTextBrush}"
+                        Text="Night shift, Maya."
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Style="{StaticResource BodyTextStyle}"
+                        Foreground="{ThemeResource SecondaryTextBrush}"
+                        Text="Ask about N2207C, its Engine 2 history or the paperwork. Answers are grounded in this app's data and computed on this PC — nothing leaves the hangar."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel
+                    x:Name="Messages"
+                    AutomationProperties.Name="Conversation"
+                    Spacing="18" />
+            </Grid>
+        </ScrollViewer>
+
+        <!--  Page-aware suggestions  -->
+        <StackPanel
+            x:Name="Suggestions"
+            Grid.Row="2"
+            Padding="20,4,20,10"
+            AutomationProperties.Name="Suggested questions"
+            Spacing="6" />
+
+        <!--  Input  -->
+        <Grid
+            Grid.Row="3"
+            Padding="16,0,16,16"
+            RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox
+                    x:Name="Input"
+                    MinHeight="40"
+                    Padding="12,9,12,8"
+                    VerticalContentAlignment="Center"
+                    AutomationProperties.AutomationId="AskInput"
+                    AutomationProperties.Name="Ask Hangar a question"
+                    CornerRadius="8"
+                    KeyDown="OnInputKeyDown"
+                    PlaceholderText="Ask about N2207C…"
+                    TextChanged="OnInputTextChanged" />
+                <Button
+                    x:Name="SendButton"
+                    Grid.Column="1"
+                    Width="40"
+                    Height="40"
+                    Padding="0"
+                    AutomationProperties.AutomationId="AskSendButton"
+                    AutomationProperties.Name="Send question"
+                    Click="OnSendClick"
+                    CornerRadius="8"
+                    IsEnabled="False"
+                    Style="{StaticResource AccentButtonStyle}"
+                    ToolTipService.ToolTip="Send (Enter)">
+                    <FontIcon FontSize="14" Glyph="&#xE724;" />
+                </Button>
+            </Grid>
+            <StackPanel
+                Grid.Row="1"
+                Orientation="Horizontal"
+                Spacing="6">
+                <FontIcon
+                    FontSize="11"
+                    Foreground="{ThemeResource TertiaryTextBrush}"
+                    Glyph="&#xE72E;" />
+                <TextBlock
+                    x:Name="FooterText"
+                    Style="{StaticResource AskMetaTextStyle}"
+                    Text="Runs on this PC · no data leaves the device" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+    </Grid>
+</UserControl>

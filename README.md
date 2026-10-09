@@ -24,6 +24,7 @@ Other screenshots in [`docs/screenshots`](docs/screenshots):
 | Page | Highlights |
 |---|---|
 | **Shell** | <ul><li>Mica Alt backdrop and an extended title bar with search (Ctrl+K) and a live departure-countdown chip</li><li>Store-style rail **NavigationView** (72px icon-over-label rail with a sliding selection pill, adapted from AI Dev Gallery's custom template; `Themes/NavigationView.xaml`)</li><li>Dark-first, with full Light and HighContrast dictionaries</li><li>`SystemAccentColor` is overridden to Runway Cyan `#3AD1F0`; Safety Amber `#FFB020` is reserved for attention states</li></ul> |
+| **Ask Hangar** | <ul><li>✦ title-bar button or **Ctrl+Space**: a 420px acrylic pane slides in from the right. It is an on-device AI assistant backed by **Phi Silica** (`Microsoft.Windows.AI.Text.LanguageModel`) on the NPU, so it works with no network, which suits Maya's no-cloud, flaky-Wi-Fi hangar</li><li>Grounded in live app data (`Services/AskContextBuilder`): current page and selection, the Engine 2 vibration story (flight 44 hail at FL190 → 1.32 ips, 2.31 ips at flight 50 vs the 1.8 limit), open Engine 2 WOs, AMM 72-00 / 72-21, and last year's same fault on CA 1916</li><li>Tokens stream in with a blinking caret, and a "Thinking on NPU…" shimmer shows before the first token</li><li>Page-aware suggestion chips; typing in search offers **Ask Hangar: &lt;query&gt;**</li><li>Answers end in **action chips**: *Flight 44* scrubs and expands the globe, *Fan blade 14* explodes Engine 2 and selects the blade, *WO* chips filter the TableView, and *Borescope* opens Inspections. In live mode the chips are chosen deterministically from keywords, never trusted from model output</li><li>On Inspections, **Draft the logbook entry** turns the shorthand into a release entry and **Use in sign-off** pre-fills the notes. It never signs: *AI drafted · Engineer signs*</li><li>The badge is honest about the mode: **On-device · Phi Silica · NPU**, or **Demo responses** with a tooltip giving the reason</li></ul> |
 | **Fleet** | <ul><li>4 KPI cards with sparklines</li><li>Hero 30-day availability **area Chart** with a dashed target line</li><li>ItemsRepeater grid of 42 aircraft, where CA 2207 breathes amber</li><li>Connected animation from a tile to the Aircraft page</li></ul> |
 | **Aircraft** | <ul><li>Canvas-style hero layout with a **Tron-style holographic wireframe A321neo** (Win2D)</li><li>Drag to orbit, wheel to zoom, idle auto-rotate</li><li>Live **airflow** streaks through both engines: bypass streams through the fan duct, and core streams that swirl through the compressor and heat up past the combustor (they fade out when exploded)</li><li>**Tap Engine 2** (or press **Explode**) to fly the camera to a 3/4 technical-illustration view. Engine 2 then bursts into 50+ LEAP-1A parts: spinner, 22 fan blades, OGVs, booster, HPC stages, combustor, HPT/LPT stages, N1/N2 shafts, clamshell thrust reversers, exhaust and gearbox. The burst uses a staggered spring cascade with motion trails and an energy pulse; collapsing reverses the cascade</li><li>Once settled, the exploded view shows module-level callouts. Fan blade 14 turns **Critical red** (amber while collapsed = attention) with a red glow and finding callout; the rest of the aircraft fades back. Tap empty space or press Esc to collapse</li><li>**Tap the red blade tip** (or **Borescope blade 14**, or Enter) to dive the camera into the fault with a red flash; the stage then drills in to Inspections</li><li>Chips (Nacelle, Fan, Compressor, Turbine) isolate a module, fly the camera to it and switch to per-part labels with a finding callout</li><li>Glass side panels hold vitals and an Engine 2 N1 vibration **line Chart** with a fleet-average band, a limit line and an amber spike, plus a flight scrubber</li><li>**Fleet globe** (Win2D, `Controls/FleetGlobe`): an orthographic dot-matrix Earth in the same hologram language. It shows great-circle red-eye arcs, 12 airborne aircraft drawn as comets with trails, parked aircraft as dim dots, and CA 2207 as the only amber point, breathing at SEA. The flight scrubber drives it: CA 2207's leg for the scrubbed flight is drawn as an arc coloured by that flight's N1 vibration (cyan, then amber at ≥ 1.4 ips, then red above the 1.8 limit), and the globe springs to centre on that leg. **Flight 44 (DEN → SEA)** shows the crew report *"Hail encounter on climb, FL190"* as a callout chip and as a diamond marker on the vibration chart. Tap the card or press **G** to expand the globe to the full stage; the hologram shrinks toward SEA. Drag to spin and wheel to zoom; Esc or **Back to aircraft** dives back in. `AircraftPage.ScrubToFlight(int)` and `ExpandGlobe()` let other features (for example, a future *Ask Hangar* citation chip) drive it</li></ul> |
 | **Work Orders** | <ul><li>First-party **TableView** with 2,400 seeded rows</li><li>Grouped by component, with templated group headers showing open count, a progress bar and hours</li><li>Filter chips, sortable headers, status pills, PersonPicture technicians and Cascadia Mono part numbers</li><li>Inline Hours editing with validation (> 0)</li><li>A **Show on aircraft** action</li></ul> |
@@ -72,6 +73,8 @@ If a redeploy fails with `0x80073CF9`, pass `--output-appx-directory "$env:LOCAL
 | **Ctrl+Shift+D** | Hidden **demo reset**: restores the 02:40 state (CA 2207 on hold, signature cleared, ink cleared, filters reset) |
 | Ctrl+Shift+L | Toggle Night shift / Day shift (Dark / Light) |
 | Ctrl+K | Focus search |
+| **Ctrl+Space** | Toggle the Ask Hangar pane (Enter sends, Esc closes) |
+| Ctrl+Shift+A | Hidden: force Ask Hangar into scripted (Demo responses) mode, or back to live |
 | Ctrl+E | Explode / collapse Engine 2 |
 | Arrows / Home / Esc | Orbit, reset camera, deselect part (Aircraft stage focused) |
 | G / Esc | Expand the fleet globe / dive back into the aircraft (Aircraft page) |
@@ -88,6 +91,7 @@ Press **Ctrl+Shift+D** before you go on stage.
 | 0:45 | Drag to orbit, then **tap Engine 2** (it explodes); blade 14 glows red | *"Let's look inside the engine. There's our problem."* |
 | 1:05 | Vibration chart: scrub the flight slider | *"The new WinUI Chart control — line, area, markers, all first-party."* |
 | 1:15 | Keep scrubbing to **flight 44**: the globe arc turns red DEN → SEA and the hail chip appears. Press **G** to expand the globe and spin it, then press **Esc** to dive back into the engine | *"The chart shows when Engine 2 went bad. The globe shows where — and why. Hail on climb out of Denver. That's blade 14."* |
+| 1:20 | *(Optional AI beat)* Turn on **airplane mode**, press **Ctrl+Space**, and tap **Why is 2207 held, and what changed?** The answer streams from the NPU; tap the **Fan blade 14** chip and Engine 2 explodes to the blade | *"No cloud, no Wi-Fi. Phi Silica on the NPU knows our fleet — and its answers are buttons."* |
 | 1:25 | **Engine 2 work orders**: group by component, toggle the **N2207C** and **Last 12 months** chips, sort by date | *"And yes — WinUI has a TableView now. 2,400 rows, grouped, filtered, editable."* |
 | 1:55 | **Engine 2 work orders**: **Show on aircraft** on the blade 14 order, then tap the red tip; the camera dives into the borescope and the reticle lands on the nick. Circle it with the pen and measure with the ruler | *"Ink is back in WinUI 3. The pen is still the best tool in the hangar."* |
 | 2:30 | Sign the pad, then click **Sign & release to service**; the aircraft turns green | *"Signed, logged, airworthy. Wheels up at 5:52."* |
@@ -139,6 +143,24 @@ The result is "real 3D" in the sense of a projected 3D wireframe; it is not a li
 ### Ink
 - There is no handwriting recognition: the note is kept as ink.
 - `RenderTargetBitmap` does not capture InkCanvas strokes, so the signature preview on the work order is re-drawn from stroke points as `Path`s.
+
+### Ask Hangar (Phi Silica)
+![Ask Hangar on the Aircraft page](docs/screenshots/ask-hangar.png)
+![Ask Hangar drafting the logbook entry](docs/screenshots/ask-hangar-logbook.png)
+![Ask Hangar in light theme](docs/screenshots/ask-hangar-light.png)
+
+- Live mode requires a **Copilot+ PC** with an NPU, the Phi Silica model installed via Windows Update, and the `systemAIModels` restricted capability (already in `Package.appxmanifest`).
+- **Limited Access Feature unlock** (`com.microsoft.windows.ai.languagemodel`) is needed on some builds. Credentials come from one of:
+  - the environment variables `HANGAR_LAF_TOKEN` and `HANGAR_LAF_ATTESTATION`;
+  - an `ask-hangar.local.json` file (`{ "lafToken": "...", "lafAttestation": "..." }`) in the package `LocalState` folder or next to the exe.
+
+  The file is git-ignored. **Never commit the token.** Without credentials the app still tries `GetReadyState()` and falls back if the feature is locked.
+- **Fallback**: if the device is not supported, the model is not ready, the LAF is locked, content moderation blocks the answer, or an exception occurs, `ScriptedResponder` streams deterministic grounded answers at about 25–40 ms per token.
+  - The badge then reads **"Demo responses"**, with the reason in its tooltip. When live, it reads **"On-device · Phi Silica · NPU"**.
+  - **Ctrl+Shift+A** forces scripted mode for stage safety.
+- Citation chips (`[[flight:44]]`, `[[part:fanblade14]]`, `[[wo:…]]`, `[[nav:…]]`) are always appended deterministically from a keyword match on the answer and grounding context. Model-emitted markers are never trusted.
+- The logbook draft only **pre-fills** the Inspections release entry ("AI drafted · Engineer signs"). The engineer still signs.
+- Diagnostics are logged to the debug output with the `[AskHangar]` prefix.
 
 ### Testing
 - Pointer flows were verified manually and through the debug start hook, not with UI automation; the dev desktop was shared. These flows are drag-orbit, ink, signature and connected animation.

@@ -169,6 +169,22 @@ public sealed class FleetDataService
 
     public Aircraft Hero => Fleet.First(a => a.Tail == HeroTail);
 
+    public const string RelatedFlight = "CA 1916";
+
+    private const int RelatedFleetIndex = 11;
+
+    private const int RelatedWorkOrderIndex = 57;
+
+    public const int PriorHeroFanWorkOrder = 46_871;
+
+    public const int OpenHeroFanWorkOrder = 50_498;
+
+    /// <summary>Tail of CA 1916, the sister A321neo with last year's matching fan-blade fault.</summary>
+    public string RelatedTail => Fleet[RelatedFleetIndex].Tail;
+
+    /// <summary>Work order number of CA 1916's fan-blade blend repair (last year).</summary>
+    public int RelatedWorkOrderNumber { get; private set; }
+
     public WorkOrder? SignOffWorkOrder { get; private set; }
 
     public event EventHandler? Reset;
@@ -301,6 +317,13 @@ public sealed class FleetDataService
                 note = "Scheduled A-check";
             }
 
+            if (i == RelatedFleetIndex)
+            {
+                // Sister A321neo that had the same fan-blade fault last year (Ask Hangar history).
+                flight = RelatedFlight;
+                type = "A321neo";
+            }
+
             Fleet.Add(new Aircraft
             {
                 Tail = tail,
@@ -364,6 +387,24 @@ public sealed class FleetDataService
             Status = WorkOrderStatus.Closed,
             Hours = 6.5,
         });
+
+        // Same fault on CA 1916 last year: overwrite one generated record so the RNG sequence and the
+        // 2,400 total stay unchanged.
+        RelatedWorkOrderNumber = list[RelatedWorkOrderIndex].Number;
+        list[RelatedWorkOrderIndex] = new WorkOrder
+        {
+            Number = RelatedWorkOrderNumber,
+            Tail = RelatedTail,
+            Component = "Fan blade",
+            Ata = AtaByComponent["Fan blade"],
+            PartNumber = "2307M41P04",
+            Technician = "Maya Okafor",
+            Opened = Now.AddMonths(-12).AddDays(-9).AddHours(-3),
+            MappedPart = EnginePart.Fan,
+            Finding = "Eng 2 fan blade 14 LE nick · blend repair per AMM 72-21 · returned to service",
+            Status = WorkOrderStatus.Closed,
+            Hours = 5.5,
+        };
 
         // Tonight's open work order.
         list.Add(new WorkOrder

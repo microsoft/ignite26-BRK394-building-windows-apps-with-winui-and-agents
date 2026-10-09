@@ -206,6 +206,15 @@ public sealed partial class InspectionsPage : Page
 
     private bool HasSignature => SignatureInk.InkPresenter.StrokeContainer.GetStrokes().Count > 0;
 
+    /// <summary>Pre-fills the release entry from an AI draft. Never signs — the engineer still signs.</summary>
+    public void PrefillReleaseEntry(string text)
+    {
+        ReleaseEntryBox.Text = text;
+        ReleaseEntryDraftNote.Visibility = Visibility.Visible;
+        ReleaseEntryBox.Focus(FocusState.Programmatic);
+        ReleaseEntryBox.SelectionStart = text.Length;
+    }
+
     private void UpdateSignatureState()
     {
         SignatureHint.Visibility = HasSignature ? Visibility.Collapsed : Visibility.Visible;
@@ -218,6 +227,8 @@ public sealed partial class InspectionsPage : Page
         SignatureInk.InkPresenter.StrokeContainer.Clear();
         SignatureRender.Children.Clear();
         SignatureInk.Visibility = Visibility.Visible;
+        ReleaseEntryBox.Text = string.Empty;
+        ReleaseEntryDraftNote.Visibility = Visibility.Collapsed;
         BurstRing.Opacity = 0;
         BurstRing2.Opacity = 0;
         SetFinalHandoffVisuals();

@@ -34,6 +34,9 @@
             <SolidColorBrush x:Key="SurfaceStrokeBrush" Color="#14FFFFFF" />
             <SolidColorBrush x:Key="GlassBrush" Color="#B3111820" />
             <SolidColorBrush x:Key="GlassStrokeBrush" Color="#26FFFFFF" />
+            <AcrylicBrush x:Key="AskPaneBrush" TintColor="#111820" TintOpacity="0.72" TintLuminosityOpacity="0.85" FallbackColor="#F0111820" />
+            <SolidColorBrush x:Key="AskPaneDividerBrush" Color="#38FFFFFF" />
+            <LinearGradientBrush x:Key="AskPaneEdgeShadowBrush" StartPoint="0,0" EndPoint="1,0"><GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="1" Color="#59000000" /></LinearGradientBrush>
             <SolidColorBrush x:Key="AccentCyanBrush" Color="#3AD1F0" />
             <SolidColorBrush x:Key="AccentCyanSoftBrush" Color="#333AD1F0" />
             <SolidColorBrush x:Key="AttentionBrush" Color="#FFB020" />
@@ -141,6 +144,9 @@
             <SolidColorBrush x:Key="SurfaceStrokeBrush" Color="#14000000" />
             <SolidColorBrush x:Key="GlassBrush" Color="#D9FFFFFF" />
             <SolidColorBrush x:Key="GlassStrokeBrush" Color="#1F000000" />
+            <AcrylicBrush x:Key="AskPaneBrush" TintColor="#FFFFFF" TintOpacity="0.7" TintLuminosityOpacity="0.9" FallbackColor="#F5FFFFFF" />
+            <SolidColorBrush x:Key="AskPaneDividerBrush" Color="#2E000000" />
+            <LinearGradientBrush x:Key="AskPaneEdgeShadowBrush" StartPoint="0,0" EndPoint="1,0"><GradientStop Offset="0" Color="#00000000" /><GradientStop Offset="1" Color="#24000000" /></LinearGradientBrush>
             <SolidColorBrush x:Key="AccentCyanBrush" Color="#0E9FC0" />
             <SolidColorBrush x:Key="AccentCyanSoftBrush" Color="#260E9FC0" />
             <SolidColorBrush x:Key="AttentionBrush" Color="#C77700" />
@@ -240,6 +246,9 @@
             <SolidColorBrush x:Key="SurfaceStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
             <SolidColorBrush x:Key="GlassBrush" Color="{ThemeResource SystemColorWindowColor}" />
             <SolidColorBrush x:Key="GlassStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="AskPaneBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="AskPaneDividerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="AskPaneEdgeShadowBrush" Color="Transparent" />
             <SolidColorBrush x:Key="AccentCyanBrush" Color="{ThemeResource SystemColorHighlightColor}" />
             <SolidColorBrush x:Key="AccentCyanSoftBrush" Color="{ThemeResource SystemColorWindowColor}" />
             <SolidColorBrush x:Key="AttentionBrush" Color="{ThemeResource SystemColorHighlightColor}" />

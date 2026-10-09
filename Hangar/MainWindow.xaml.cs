@@ -46,6 +46,7 @@ public sealed partial class MainWindow : Window
 
         NavigationService.Navigate(startPage, null, new SuppressNavigationTransitionInfo());
         NavView.Loaded += (_, _) => OnNavigated(null, NavigationService.CurrentPage ?? typeof(FleetPage));
+        InitAsk();
     }
 
     public ShellViewModel ViewModel { get; }
@@ -134,6 +135,7 @@ public sealed partial class MainWindow : Window
         if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
         {
             ViewModel.UpdateSuggestions(sender.Text);
+            AddAskSuggestion(sender.Text);
         }
     }
 
@@ -147,6 +149,9 @@ public sealed partial class MainWindow : Window
                 break;
             case WorkOrder order:
                 NavigationService.Navigate(typeof(WorkOrdersPage), new WorkOrdersNavigationArgs(order.NumberText));
+                break;
+            case AskQuery ask:
+                AskPane.OpenAndAsk(ask.Text);
                 break;
             default:
                 if (!string.IsNullOrWhiteSpace(args.QueryText))
@@ -184,6 +189,7 @@ public sealed partial class MainWindow : Window
         _data.ResetDemo();
         NavigationService.Navigate(typeof(FleetPage), "reset", new DrillInNavigationTransitionInfo());
         RootFrame.BackStack.Clear();
+        AskPane.Clear();
 
         ResetInfoBar.IsOpen = true;
         _infoBarTimer?.Stop();
