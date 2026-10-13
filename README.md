@@ -2,24 +2,68 @@
 
 > *"It's 2:40am. One of 42 aircraft just landed with a problem — and it leaves at 6:15."*
 
-HANGAR is a WinUI 3 line-of-business showcase built for an Ignite 2026 keynote demo. It shows a night-shift maintenance controller taking aircraft **CA 2207 (N2207C, A321neo)** from an Engine 2 vibration alert to release-to-service in about three minutes.
+HANGAR is a Windows line-of-business showcase built for an Ignite 2026 keynote demo. It shows a night-shift maintenance controller taking aircraft **CA 2207 (N2207C, A321neo)** from an Engine 2 vibration alert to release-to-service in about three minutes.
 
-The full product and design spec is in [`docs/CONCEPT.md`](docs/CONCEPT.md), which covers the story, the "Night Shift" design language, the screens and the stage script.
+The full product and design spec is in [`docs/concept.md`](docs/concept.md), which covers the story, the "Night Shift" design language, the screens and the stage script.
+
+The app exists in three implementations of the same UI, so this repo doubles as a framework comparison: the original **WinUI 3** app, a port written fully in **Reactor** (C# function components on WinUI), and an **Electron** port used as the benchmark baseline.
+
+| WinUI 3 | Reactor | Electron |
+|---|---|---|
+| ![WinUI](docs/screenshots/winui/fleet.png) | ![Reactor](docs/screenshots/reactor/fleet-dark.png) | ![Electron](docs/screenshots/electron/fleet-dark.png) |
+
+## Implementations
+
+| | Folder | Stack | Run |
+|---|---|---|---|
+| **WinUI 3** (reference) | [`src/Hangar.WinUI`](src/Hangar.WinUI) | XAML + MVVM, WinAppSDK 2.5.4-experimental, Win2D, Native AOT | `cd src\Hangar.WinUI; winapp run .` |
+| **Reactor** | [`src/Hangar.Reactor`](src/Hangar.Reactor) | Microsoft.UI.Reactor function components (no XAML); shares models, services and the Win2D stage with the WinUI project. Notes: [`PORTING.md`](src/Hangar.Reactor/PORTING.md) | `cd src\Hangar.Reactor; winapp run .` |
+| **Electron** | [`src/Hangar.Electron`](src/Hangar.Electron) | Electron 41, plain HTML/CSS/JS + Canvas 2D | `cd src\Hangar.Electron; npm ci; npm start` |
+
+Both .NET projects are in [`Hangar.slnx`](Hangar.slnx). The WinUI and Reactor builds are packaged (MSIX loose layout) and use different package identities, so they can be installed side by side.
+
+## Benchmark summary
+
+Cold start to first frame, working set after a scripted page tour, and on-disk size (Surface Pro, Snapdragon X, ARM64). Full method and raw numbers: [`docs/benchmark.md`](docs/benchmark.md); harness in [`bench/`](bench).
+
+| Build | Startup | Memory | Size on disk |
+|---|---|---|---|
+| WinUI, Native AOT | **461 ms** | **413 MB** | **59.5 MB** |
+| WinUI, ReadyToRun | 531 ms | 476 MB | 236 MB |
+| Electron | 596 ms | 1,077 MB | 346 MB |
+
+## Repo layout
+
+```
+Hangar.slnx              WinUI + Reactor projects
+src/
+  Hangar.WinUI/          the reference WinUI 3 app (package identity CFF58EE2-…)
+  Hangar.Reactor/        Reactor port (links shared code from Hangar.WinUI)
+  Hangar.Electron/       Electron port (npm project)
+bench/                   benchmark script and results JSON
+docs/
+  concept.md             product + design spec
+  demo-script.md         3-minute stage script
+  benchmark.md           WinUI (AOT / R2R) vs Electron
+  screenshots/{winui,reactor,electron}/
+```
+
+## The WinUI app
 
 | Fleet | Aircraft (hologram) |
 |---|---|
-| ![Fleet](docs/screenshots/fleet.png) | ![Aircraft](docs/screenshots/aircraft.png) |
+| ![Fleet](docs/screenshots/winui/fleet.png) | ![Aircraft](docs/screenshots/winui/aircraft.png) |
 | **Work Orders (TableView)** | **Inspections (InkCanvas)** |
-| ![Work Orders](docs/screenshots/workorders.png) | ![Inspections](docs/screenshots/inspections.png) |
+| ![Work Orders](docs/screenshots/winui/workorders.png) | ![Inspections](docs/screenshots/winui/inspections.png) |
 
-Other screenshots in [`docs/screenshots`](docs/screenshots):
+Other screenshots in [`docs/screenshots/winui`](docs/screenshots/winui):
 - **Engine 2 exploded:** `aircraft-exploded.png`, `aircraft-exploded-light.png`
 - **Part zoom on the aircraft page:** `aircraft-fan.png`, `aircraft-turbine.png`
 - **Fleet globe:** `aircraft-globe.png` (compact card, scrubbed to flight 44), `aircraft-globe-expanded.png`, `aircraft-globe-light.png`
 - **After sign-off:** `inspections-signed.png`
 - **Day-shift (Light) versions of each page:** `*-light.png`
 
-## What's inside
+### What's inside
 
 | Page | Highlights |
 |---|---|
@@ -30,7 +74,7 @@ Other screenshots in [`docs/screenshots`](docs/screenshots):
 | **Work Orders** | <ul><li>First-party **TableView** with 2,400 seeded rows</li><li>Grouped by component, with templated group headers showing open count, a progress bar and hours</li><li>Filter chips, sortable headers, status pills, PersonPicture technicians and Cascadia Mono part numbers</li><li>Inline Hours editing with validation (> 0)</li><li>A **Show on aircraft** action</li></ul> |
 | **Inspections** | <ul><li>Framed borescope viewport: ink is confined to the image, and the **InkToolbar** (pen, highlighter, eraser, ruler) and sign-off panel sit outside it</li><li>Arriving from the hologram, the image settles in and a red reticle lands on the blade 14 nick; a breadcrumb leads back to the exploded engine</li><li>Strokes can be saved and restored</li><li>Signing the ink signature pad and choosing **Sign & release** adds or updates WO 2207-014, flips CA 2207 to green across the app, and plays one celebratory composition moment</li></ul> |
 
-## Tech stack
+### Tech stack
 
 - **.NET 10**, `net10.0-windows10.0.26100.0`, packaged (MSIX), MVVM with **CommunityToolkit.Mvvm**
 - **Microsoft.WindowsAppSDK 2.5.4-experimental**, which provides the first-party `TableView`, `Chart` (line/area/bar) and `InkCanvas`/`InkToolbar`
@@ -39,7 +83,7 @@ Other screenshots in [`docs/screenshots`](docs/screenshots):
 - The window is sized for **2560×1600 @ 150%**
 
 ```
-Hangar/
+src/Hangar.WinUI/
   Views/        Fleet, Aircraft, WorkOrders, Inspections pages
   ViewModels/   CommunityToolkit.Mvvm view models
   Services/     FleetService (seeded data, demo state, reset)
@@ -49,24 +93,25 @@ Hangar/
   Themes/       Semantic brushes: Dark (Default) / Light / HighContrast
 ```
 
-## Build & run
+### Build & run
 
 Prerequisites:
 - Windows 11 24H2 or later, with Developer Mode on
 - .NET 10 SDK
 - WinApp CLI 0.7+, installed with `winget install Microsoft.WinAppCli`
+- Node.js 20+ (Electron port only)
 
 ```powershell
-cd Hangar
+cd src\Hangar.WinUI
 dotnet build -c Debug -p:Platform=ARM64   # or x64
 winapp run .                              # registers the loose layout and launches
 ```
 
-You can also open `Hangar/Hangar.csproj` in Visual Studio 2026 and press F5 with the packaged profile.
+You can also open `Hangar.slnx` in Visual Studio 2026 and press F5 with the packaged profile.
 
 If a redeploy fails with `0x80073CF9`, pass `--output-appx-directory "$env:LOCALAPPDATA\winapp-layout\Hangar-Debug"` to `winapp run`.
 
-## Keyboard
+### Keyboard
 
 | Keys | Action |
 |---|---|
@@ -80,26 +125,11 @@ If a redeploy fails with `0x80073CF9`, pass `--output-appx-directory "$env:LOCAL
 | G / Esc | Expand the fleet globe / dive back into the aircraft (Aircraft page) |
 | Arrows / +/− / Home | Spin, zoom, re-centre the expanded globe |
 
-## Demo script (3 minutes)
+The 3-minute stage script is in [`docs/demo-script.md`](docs/demo-script.md).
 
-Press **Ctrl+Shift+D** before you go on stage.
+### Known limitations & risks (WinUI)
 
-| Time | Do | Say |
-|---|---|---|
-| 0:00 | Fleet: the amber CA 2207 tile is breathing | *"It's 2:40am. One of 42 aircraft just landed with a problem — and it leaves at 6:15."* |
-| 0:20 | Click the tile; it connects into the Aircraft page | *"This is WinUI. Native, GPU-drawn 3D on a Surface."* |
-| 0:45 | Drag to orbit, then **tap Engine 2** (it explodes); blade 14 glows red | *"Let's look inside the engine. There's our problem."* |
-| 1:05 | Vibration chart: scrub the flight slider | *"The new WinUI Chart control — line, area, markers, all first-party."* |
-| 1:15 | Keep scrubbing to **flight 44**: the globe arc turns red DEN → SEA and the hail chip appears. Press **G** to expand the globe and spin it, then press **Esc** to dive back into the engine | *"The chart shows when Engine 2 went bad. The globe shows where — and why. Hail on climb out of Denver. That's blade 14."* |
-| 1:20 | *(Optional AI beat)* Turn on **airplane mode**, press **Ctrl+Space**, and tap **Why is 2207 held, and what changed?** The answer streams from the NPU; tap the **Fan blade 14** chip and Engine 2 explodes to the blade | *"No cloud, no Wi-Fi. Phi Silica on the NPU knows our fleet — and its answers are buttons."* |
-| 1:25 | **Engine 2 work orders**: group by component, toggle the **N2207C** and **Last 12 months** chips, sort by date | *"And yes — WinUI has a TableView now. 2,400 rows, grouped, filtered, editable."* |
-| 1:55 | **Engine 2 work orders**: **Show on aircraft** on the blade 14 order, then tap the red tip; the camera dives into the borescope and the reticle lands on the nick. Circle it with the pen and measure with the ruler | *"Ink is back in WinUI 3. The pen is still the best tool in the hangar."* |
-| 2:30 | Sign the pad, then click **Sign & release to service**; the aircraft turns green | *"Signed, logged, airworthy. Wheels up at 5:52."* |
-| 2:50 | Go back to Fleet: everything is green | *"Built entirely with WinUI and the Windows App SDK. Open source — go build yours."* |
-
-## Known limitations & risks
-
-### 3D (Composition Scenes)
+#### 3D (Composition Scenes)
 The spec called for `Microsoft.UI.Composition.Scenes` (SceneVisual with mesh nodes). A spike showed that **procedural meshes do not render on WinAppSDK 2.5.4-experimental**: the SceneVisual is created, but no geometry appears. The spike is in commit `9033415`.
 
 The documented fallback is a **Win2D wireframe hologram** (`Controls/AircraftStage`, `Helpers/WireMesh.cs`). It has these properties:
@@ -110,7 +140,7 @@ The documented fallback is a **Win2D wireframe hologram** (`Controls/AircraftSta
 
 The result is "real 3D" in the sense of a projected 3D wireframe; it is not a lit or shaded mesh.
 
-### Experimental controls (WinAppSDK 2.5.4-experimental)
+#### Experimental controls (WinAppSDK 2.5.4-experimental)
 
 **TableView**
 - Template cells need `Margin="10,0,0,0"` to align with text columns.
@@ -135,19 +165,19 @@ The result is "real 3D" in the sense of a projected 3D wireframe; it is not a li
 - Demo from **Debug**, or validate Release before stage day.
 - `WUI2011` analyzer warnings are expected.
 
-### Fleet globe
+#### Fleet globe
 - The land mask is baked at dev time from **Natural Earth 1:110m land** (public domain, [naturalearthdata.com](https://www.naturalearthdata.com/)) into a 1.5° lat/lon dot grid (`Assets/Globe/land-dots.bin`, about 5,200 dots, embedded resource). Nothing is downloaded at runtime.
 - Network data (airports, CA 2207's 50 legs and the 02:40 PT red-eyes) is deterministic and seeded in `FleetDataService`. Airborne progress advances slowly in real time from the demo-reset moment.
 - The globe draws with `CanvasAnimatedControl`. It pauses when not visible and drops to 30 fps while idle in compact mode.
 
-### Ink
+#### Ink
 - There is no handwriting recognition: the note is kept as ink.
 - `RenderTargetBitmap` does not capture InkCanvas strokes, so the signature preview on the work order is re-drawn from stroke points as `Path`s.
 
-### Ask Hangar (Phi Silica)
-![Ask Hangar on the Aircraft page](docs/screenshots/ask-hangar.png)
-![Ask Hangar drafting the logbook entry](docs/screenshots/ask-hangar-logbook.png)
-![Ask Hangar in light theme](docs/screenshots/ask-hangar-light.png)
+#### Ask Hangar (Phi Silica)
+![Ask Hangar on the Aircraft page](docs/screenshots/winui/ask-hangar.png)
+![Ask Hangar drafting the logbook entry](docs/screenshots/winui/ask-hangar-logbook.png)
+![Ask Hangar in light theme](docs/screenshots/winui/ask-hangar-light.png)
 
 - Live mode requires a **Copilot+ PC** with an NPU, the Phi Silica model installed via Windows Update, and the `systemAIModels` restricted capability (already in `Package.appxmanifest`).
 - **Limited Access Feature unlock** (`com.microsoft.windows.ai.languagemodel`) is needed on some builds. Credentials come from one of:
@@ -162,7 +192,7 @@ The result is "real 3D" in the sense of a projected 3D wireframe; it is not a li
 - The logbook draft only **pre-fills** the Inspections release entry ("AI drafted · Engineer signs"). The engineer still signs.
 - Diagnostics are logged to the debug output with the `[AskHangar]` prefix.
 
-### Testing
+#### Testing
 - Pointer flows were verified manually and through the debug start hook, not with UI automation; the dev desktop was shared. These flows are drag-orbit, ink, signature and connected animation.
 - Run the full script on the stage device before the keynote.
 - **Debug start hook** (Debug builds only): put a `startpage.txt` in the package `LocalState` folder containing, for example, `Aircraft light fan` or `Inspections dark sign`. The app then opens directly to that state. It was used to capture the screenshots. Delete the file afterwards.

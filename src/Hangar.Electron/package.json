@@ -1,0 +1,15 @@
+{
+  "name": "hangar-electron",
+  "version": "1.0.0",
+  "description": "HANGAR - Electron port (benchmark comparison)",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager . Hangar --platform=win32 --arch=arm64 --out=dist --overwrite --asar --ignore=^/dist"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "41.10.7"
+  }
+}

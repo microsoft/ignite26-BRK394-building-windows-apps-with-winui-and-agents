@@ -1,0 +1,935 @@
+{
+  "machine": {
+    "cpu": "Snapdragon(R) X 12-core X1E80100 @ 3.40 GHz",
+    "cores": 12,
+    "ramGB": 31.6,
+    "os": "Microsoft Windows 11 Enterprise Insider Preview 10.0.26340.0"
+  },
+  "timestamp": "2026-10-09T16:29:46.8975236+02:00",
+  "runsPerApp": 5,
+  "cpuSampleSeconds": 10,
+  "summary": {
+    "winui": {
+      "startupMs": 531.0,
+      "internalStartupMs": 531.0,
+      "workingSetMB": 475.9,
+      "privateMB": 411.9,
+      "workingSetAfterNavMB": 518.8,
+      "privateAfterNavMB": 420.9,
+      "processes": 1.0,
+      "navColdAllMs": 115.1,
+      "navWarmAllMs": 64.805,
+      "nav": {
+        "aircraft": {
+          "coldMs": 117.17,
+          "warmMs": 61.66
+        },
+        "workorders": {
+          "coldMs": 172.64,
+          "warmMs": 100.61
+        },
+        "inspections": {
+          "coldMs": 72.72,
+          "warmMs": 41.24
+        },
+        "fleet": {
+          "coldMs": 64.13,
+          "warmMs": 65.865
+        }
+      },
+      "cpuFleetIdle": {
+        "pctOneCore": 6.4,
+        "pctMachine": 0.53
+      },
+      "cpuAircraft": {
+        "pctOneCore": 64.2,
+        "pctMachine": 5.35
+      },
+      "diskMB": 236.1
+    },
+    "electron": {
+      "startupMs": 496.0,
+      "internalStartupMs": 391.0,
+      "workingSetMB": 1039.3,
+      "privateMB": 781.5,
+      "workingSetAfterNavMB": 1043.1,
+      "privateAfterNavMB": 808.1,
+      "processes": 4.0,
+      "navColdAllMs": 29.650000035762787,
+      "navWarmAllMs": 19.05000001192093,
+      "nav": {
+        "aircraft": {
+          "coldMs": 59.39999997615814,
+          "warmMs": 36.85000002384186
+        },
+        "workorders": {
+          "coldMs": 38.39999997615814,
+          "warmMs": 28.049999952316284
+        },
+        "inspections": {
+          "coldMs": 18.5,
+          "warmMs": 16.100000023841858
+        },
+        "fleet": {
+          "coldMs": 18.799999952316284,
+          "warmMs": 15.850000023841858
+        }
+      },
+      "cpuFleetIdle": {
+        "pctOneCore": 19.0,
+        "pctMachine": 1.58
+      },
+      "cpuAircraft": {
+        "pctOneCore": 113.7,
+        "pctMachine": 9.47
+      },
+      "diskMB": 345.7
+    }
+  },
+  "runs": [
+    {
+      "kind": "winui",
+      "run": 0,
+      "appPid": 39028,
+      "startupMs": 531,
+      "internalStartupMs": 531,
+      "memAt5s": {
+        "processes": 1,
+        "workingSetMB": 475.9,
+        "privateMB": 411.9
+      },
+      "memAfterNav": {
+        "processes": 1,
+        "workingSetMB": 518.3,
+        "privateMB": 420.3
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 116.75
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 206.2
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 125.96
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 69.14
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 60.64
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 85.76
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 44.22
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 68.28
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 56.55
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 102.47
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 38.88
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 65.88
+        }
+      ]
+    },
+    {
+      "kind": "electron",
+      "run": 0,
+      "appPid": 80100,
+      "startupMs": 516,
+      "internalStartupMs": 404,
+      "memAt5s": {
+        "processes": 4,
+        "workingSetMB": 1049.0,
+        "privateMB": 781.5
+      },
+      "memAfterNav": {
+        "processes": 4,
+        "workingSetMB": 1119.0,
+        "privateMB": 848.6
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 65.10000002384186
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 38.800000071525574
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 23.200000047683716
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 18.200000047683716
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 41.89999997615814
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 18.5
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 32.5
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 12.300000071525574
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 36.799999952316284
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 28.59999990463257
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 15.100000023841858
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 18.40000009536743
+        }
+      ]
+    },
+    {
+      "kind": "electron",
+      "run": 1,
+      "appPid": 62232,
+      "startupMs": 496,
+      "internalStartupMs": 388,
+      "memAt5s": {
+        "processes": 4,
+        "workingSetMB": 1088.9,
+        "privateMB": 818.9
+      },
+      "memAfterNav": {
+        "processes": 4,
+        "workingSetMB": 1116.6,
+        "privateMB": 845.4
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 68.29999995231628
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 38.5
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 16.0
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 19.799999952316284
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 35.40000009536743
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 17.200000047683716
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 17.300000071525574
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 15.200000047683716
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 37.10000002384186
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 35.299999952316284
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 17.0
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 14.5
+        }
+      ]
+    },
+    {
+      "kind": "winui",
+      "run": 1,
+      "appPid": 27148,
+      "startupMs": 560,
+      "internalStartupMs": 560,
+      "memAt5s": {
+        "processes": 1,
+        "workingSetMB": 475.6,
+        "privateMB": 411.2
+      },
+      "memAfterNav": {
+        "processes": 1,
+        "workingSetMB": 519.0,
+        "privateMB": 420.9
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 121.88
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 175.13
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 72.72
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 68.11
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 63.09
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 108.03
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 47.03
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 71.96
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 68.02
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 106.99
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 41.24
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 64.93
+        }
+      ]
+    },
+    {
+      "kind": "winui",
+      "run": 2,
+      "appPid": 61488,
+      "startupMs": 525,
+      "internalStartupMs": 525,
+      "memAt5s": {
+        "processes": 1,
+        "workingSetMB": 479.8,
+        "privateMB": 415.9
+      },
+      "memAfterNav": {
+        "processes": 1,
+        "workingSetMB": 516.5,
+        "privateMB": 418.7
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 113.45
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 169.66
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 71.36
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 64.13
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 62.68
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 94.63
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 40.2
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 65.38
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 63.85
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 82.98
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 38.33
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 80.15
+        }
+      ]
+    },
+    {
+      "kind": "electron",
+      "run": 2,
+      "appPid": 74380,
+      "startupMs": 493,
+      "internalStartupMs": 391,
+      "memAt5s": {
+        "processes": 4,
+        "workingSetMB": 1003.7,
+        "privateMB": 769.1
+      },
+      "memAfterNav": {
+        "processes": 4,
+        "workingSetMB": 1005.1,
+        "privateMB": 769.8
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 55.89999997615814
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 36.10000002384186
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 20.0
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 18.800000071525574
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 36.60000002384186
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 28.199999928474426
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 16.700000047683716
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 17.0
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 36.90000009536743
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 29.5
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 6.699999928474426
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 34.89999997615814
+        }
+      ]
+    },
+    {
+      "kind": "electron",
+      "run": 3,
+      "appPid": 12744,
+      "startupMs": 498,
+      "internalStartupMs": 393,
+      "memAt5s": {
+        "processes": 4,
+        "workingSetMB": 1039.3,
+        "privateMB": 804.8
+      },
+      "memAfterNav": {
+        "processes": 4,
+        "workingSetMB": 1043.1,
+        "privateMB": 808.1
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 59.39999997615814
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 38.39999997615814
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 15.899999976158142
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 18.799999952316284
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 38.40000009536743
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 20.5
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 19.600000023841858
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 16.5
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 37.10000002384186
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 27.899999976158142
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 4.600000023841858
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 18.300000071525574
+        }
+      ]
+    },
+    {
+      "kind": "winui",
+      "run": 3,
+      "appPid": 36012,
+      "startupMs": 575,
+      "internalStartupMs": 575,
+      "memAt5s": {
+        "processes": 1,
+        "workingSetMB": 473.1,
+        "privateMB": 409.0
+      },
+      "memAfterNav": {
+        "processes": 1,
+        "workingSetMB": 518.8,
+        "privateMB": 420.9
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 117.52
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 172.64
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 72.08
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 63.56
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 64.89
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 98.75
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 41.24
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 67.58
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 58.68
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 110.41
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 58.26
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 64.72
+        }
+      ]
+    },
+    {
+      "kind": "winui",
+      "run": 4,
+      "appPid": 77680,
+      "startupMs": 528,
+      "internalStartupMs": 528,
+      "memAt5s": {
+        "processes": 1,
+        "workingSetMB": 486.8,
+        "privateMB": 424.9
+      },
+      "memAfterNav": {
+        "processes": 1,
+        "workingSetMB": 524.7,
+        "privateMB": 428.8
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 117.17
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 167.38
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 74.11
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 62.19
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 59.26
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 87.67
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 50.49
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 64.43
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 59.82
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 107.03
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 39.48
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 65.85
+        }
+      ]
+    },
+    {
+      "kind": "electron",
+      "run": 4,
+      "appPid": 37396,
+      "startupMs": 481,
+      "internalStartupMs": 377,
+      "memAt5s": {
+        "processes": 4,
+        "workingSetMB": 994.6,
+        "privateMB": 764.1
+      },
+      "memAfterNav": {
+        "processes": 4,
+        "workingSetMB": 1034.6,
+        "privateMB": 799.4
+      },
+      "nav": [
+        {
+          "page": "aircraft",
+          "round": 0,
+          "ms": 55.699999928474426
+        },
+        {
+          "page": "workorders",
+          "round": 0,
+          "ms": 36.300000071525574
+        },
+        {
+          "page": "inspections",
+          "round": 0,
+          "ms": 18.5
+        },
+        {
+          "page": "fleet",
+          "round": 0,
+          "ms": 15.200000047683716
+        },
+        {
+          "page": "aircraft",
+          "round": 1,
+          "ms": 36.200000047683716
+        },
+        {
+          "page": "workorders",
+          "round": 1,
+          "ms": 29.700000047683716
+        },
+        {
+          "page": "inspections",
+          "round": 1,
+          "ms": 15.5
+        },
+        {
+          "page": "fleet",
+          "round": 1,
+          "ms": 10.5
+        },
+        {
+          "page": "aircraft",
+          "round": 2,
+          "ms": 30.799999952316284
+        },
+        {
+          "page": "workorders",
+          "round": 2,
+          "ms": 16.799999952316284
+        },
+        {
+          "page": "inspections",
+          "round": 2,
+          "ms": 10.900000095367432
+        },
+        {
+          "page": "fleet",
+          "round": 2,
+          "ms": 15.199999928474426
+        }
+      ]
+    }
+  ],
+  "cpuRuns": [
+    {
+      "kind": "winui",
+      "page": "Fleet",
+      "cpu": {
+        "pctOneCore": 6.4,
+        "pctMachine": 0.53
+      },
+      "mem": {
+        "processes": 1,
+        "workingSetMB": 250.5,
+        "privateMB": 167.3
+      }
+    },
+    {
+      "kind": "electron",
+      "page": "Fleet",
+      "cpu": {
+        "pctOneCore": 19.0,
+        "pctMachine": 1.58
+      },
+      "mem": {
+        "processes": 4,
+        "workingSetMB": 479.9,
+        "privateMB": 309.9
+      }
+    },
+    {
+      "kind": "winui",
+      "page": "Aircraft",
+      "cpu": {
+        "pctOneCore": 64.2,
+        "pctMachine": 5.35
+      },
+      "mem": {
+        "processes": 1,
+        "workingSetMB": 367.6,
+        "privateMB": 279.1
+      }
+    },
+    {
+      "kind": "electron",
+      "page": "Aircraft",
+      "cpu": {
+        "pctOneCore": 113.7,
+        "pctMachine": 9.47
+      },
+      "mem": {
+        "processes": 4,
+        "workingSetMB": 866.0,
+        "privateMB": 692.0
+      }
+    }
+  ]
+}

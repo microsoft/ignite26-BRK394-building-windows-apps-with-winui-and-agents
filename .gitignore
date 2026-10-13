@@ -1,3 +1,25 @@
-
 # Ask Hangar LAF credentials (never commit)
 ask-hangar.local.json
+
+# .NET / Visual Studio
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+AppPackages/
+*.msix
+*.appx
+PublishProfiles/
+*.pubxml
+*.binlog
+
+# Electron / Node
+node_modules/
+dist/
+out/
+
+# Benchmark scratch
+bench/tmp/
+bench/run-log.txt
+*.log

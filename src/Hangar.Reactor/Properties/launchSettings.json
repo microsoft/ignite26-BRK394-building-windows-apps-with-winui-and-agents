@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Hangar.Reactor (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Hangar.Reactor (Unpackaged)": {
+      "commandName": "Project"
+    },
+    "Hangar.Reactor (Unpackaged, Devtools)": {
+      "commandName": "Project",
+      "commandLineArgs": "--devtools"
+    }
+  }
+}

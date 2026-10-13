@@ -1,0 +1,1394 @@
+﻿{
+    "machine":  {
+                    "cpu":  "Snapdragon(R) X 12-core X1E80100 @ 3.40 GHz",
+                    "cores":  12,
+                    "ramGB":  31.6,
+                    "os":  "Microsoft Windows 11 Enterprise Insider Preview 10.0.26340.0"
+                },
+    "timestamp":  "2026-10-09T18:06:58.7710236+02:00",
+    "runsPerApp":  5,
+    "cpuSampleSeconds":  10,
+    "summary":  {
+                    "winui":  {
+                                  "startupMs":  824,
+                                  "internalStartupMs":  824,
+                                  "workingSetMB":  470.8,
+                                  "privateMB":  401.2,
+                                  "workingSetAfterNavMB":  513.2,
+                                  "privateAfterNavMB":  409.8,
+                                  "processes":  0,
+                                  "navColdAllMs":  136,
+                                  "navWarmAllMs":  72.695,
+                                  "nav":  {
+                                              "aircraft":  {
+                                                               "coldMs":  150.3,
+                                                               "warmMs":  71.055
+                                                           },
+                                              "workorders":  {
+                                                                 "coldMs":  218.59,
+                                                                 "warmMs":  101.375
+                                                             },
+                                              "inspections":  {
+                                                                  "coldMs":  87.39,
+                                                                  "warmMs":  48.989999999999995
+                                                              },
+                                              "fleet":  {
+                                                            "coldMs":  76.75,
+                                                            "warmMs":  73.14
+                                                        }
+                                          },
+                                  "cpuFleetIdle":  {
+                                                       "pctOneCore":  7.3,
+                                                       "pctMachine":  0.61
+                                                   },
+                                  "cpuAircraft":  {
+                                                      "pctOneCore":  67.1,
+                                                      "pctMachine":  5.59
+                                                  },
+                                  "diskMB":  110.6
+                              },
+                    "aot":  {
+                                "startupMs":  461,
+                                "internalStartupMs":  461,
+                                "workingSetMB":  413.3,
+                                "privateMB":  381.9,
+                                "workingSetAfterNavMB":  463,
+                                "privateAfterNavMB":  398.6,
+                                "processes":  0,
+                                "navColdAllMs":  121.62,
+                                "navWarmAllMs":  71.73,
+                                "nav":  {
+                                            "aircraft":  {
+                                                             "coldMs":  122.46,
+                                                             "warmMs":  69.515
+                                                         },
+                                            "workorders":  {
+                                                               "coldMs":  190.9,
+                                                               "warmMs":  97.515
+                                                           },
+                                            "inspections":  {
+                                                                "coldMs":  115.56,
+                                                                "warmMs":  49.78
+                                                            },
+                                            "fleet":  {
+                                                          "coldMs":  72.07,
+                                                          "warmMs":  75.89500000000001
+                                                      }
+                                        },
+                                "cpuFleetIdle":  {
+                                                     "pctOneCore":  5.7,
+                                                     "pctMachine":  0.47
+                                                 },
+                                "cpuAircraft":  {
+                                                    "pctOneCore":  68.3,
+                                                    "pctMachine":  5.69
+                                                },
+                                "diskMB":  59.5
+                            },
+                    "electron":  {
+                                     "startupMs":  596,
+                                     "internalStartupMs":  468,
+                                     "workingSetMB":  1077.3,
+                                     "privateMB":  812.2,
+                                     "workingSetAfterNavMB":  1102.6,
+                                     "privateAfterNavMB":  835.7,
+                                     "processes":  4,
+                                     "navColdAllMs":  43.150000035762787,
+                                     "navWarmAllMs":  20.750000059604645,
+                                     "nav":  {
+                                                 "aircraft":  {
+                                                                  "coldMs":  61.200000047683709,
+                                                                  "warmMs":  37.300000011920929
+                                                              },
+                                                 "workorders":  {
+                                                                    "coldMs":  47.200000047683709,
+                                                                    "warmMs":  28.399999976158142
+                                                                },
+                                                 "inspections":  {
+                                                                     "coldMs":  16.699999928474426,
+                                                                     "warmMs":  15.349999964237213
+                                                                 },
+                                                 "fleet":  {
+                                                               "coldMs":  16.300000071525574,
+                                                               "warmMs":  15.299999952316284
+                                                           }
+                                             },
+                                     "cpuFleetIdle":  {
+                                                          "pctOneCore":  22.6,
+                                                          "pctMachine":  1.88
+                                                      },
+                                     "cpuAircraft":  {
+                                                         "pctOneCore":  118,
+                                                         "pctMachine":  9.83
+                                                     },
+                                     "diskMB":  345.7
+                                 }
+                },
+    "runs":  [
+                 {
+                     "kind":  "winui",
+                     "run":  0,
+                     "appPid":  45564,
+                     "startupMs":  925,
+                     "internalStartupMs":  925,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  478.6,
+                                     "privateMB":  402.9
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  524.1,
+                                         "privateMB":  414
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  259.45
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  268.97
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  139.95
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  85.49
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  67.09
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  105.83
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  73.15
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  84.09
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  75.53
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  94.18
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  47.25
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  66.85
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "aot",
+                     "run":  0,
+                     "appPid":  47796,
+                     "startupMs":  464,
+                     "internalStartupMs":  464,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  412.7,
+                                     "privateMB":  380.9
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  457.6,
+                                         "privateMB":  392.9
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  120.12
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  307.46
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  131.23
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  76.17
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  69.98
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  114.68
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  44.53
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  71.65
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  64.9
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  104.28
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  50.62
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  77.23
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "electron",
+                     "run":  0,
+                     "appPid":  16496,
+                     "startupMs":  619,
+                     "internalStartupMs":  513,
+                     "memAt5s":  {
+                                     "processes":  4,
+                                     "workingSetMB":  1026,
+                                     "privateMB":  778.5
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  4,
+                                         "workingSetMB":  1068.9,
+                                         "privateMB":  818.5
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  112.10000002384186
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  45.100000023841858
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  43.700000047683709
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  18.400000095367432
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  42.099999904632568
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  22.700000047683716
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  15.399999976158142
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  16.400000095367432
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  37.299999952316291
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  28
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  13.200000047683716
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  15.399999976158142
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "electron",
+                     "run":  1,
+                     "appPid":  16180,
+                     "startupMs":  608,
+                     "internalStartupMs":  468,
+                     "memAt5s":  {
+                                     "processes":  4,
+                                     "workingSetMB":  1080.6,
+                                     "privateMB":  816.2
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  4,
+                                         "workingSetMB":  1110.3,
+                                         "privateMB":  842
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  59.5
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  47.200000047683709
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  14.699999928474426
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  16.5
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  38.5
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  24.5
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  4.8999999761581421
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  18.800000071525577
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  36.899999976158142
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  28.799999952316284
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  16.399999976158142
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  10.199999928474426
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "aot",
+                     "run":  1,
+                     "appPid":  79684,
+                     "startupMs":  411,
+                     "internalStartupMs":  411,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  413.3,
+                                     "privateMB":  381.9
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  464.5,
+                                         "privateMB":  400.2
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  127.25
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  194.29
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  115.56
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  72.92
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  69.74
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  91.89
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  48.42
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  86.74
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  69.52
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  99.64
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  63.69
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  71.08
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "winui",
+                     "run":  1,
+                     "appPid":  57556,
+                     "startupMs":  889,
+                     "internalStartupMs":  889,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  469.1,
+                                     "privateMB":  400.5
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  512.7,
+                                         "privateMB":  409.8
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  141.49
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  204.21
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  79.19
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  77.01
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  70.2
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  103.85
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  75.52
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  79.69
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  72.59
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  96.43
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  51.84
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  72.68
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "winui",
+                     "run":  2,
+                     "appPid":  46996,
+                     "startupMs":  712,
+                     "internalStartupMs":  712,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  470.9,
+                                     "privateMB":  401.2
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  511.1,
+                                         "privateMB":  406.7
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  150.3
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  265.51
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  88.19
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  69.05
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  71.91
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  117.42
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  47.25
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  73.6
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  65.65
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  106.52
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  70.71
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  69.4
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "aot",
+                     "run":  2,
+                     "appPid":  79468,
+                     "startupMs":  457,
+                     "internalStartupMs":  457,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  416.4,
+                                     "privateMB":  385.5
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  467.6,
+                                         "privateMB":  403.8
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  120.78
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  190.9
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  78.92
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  72.07
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  69.51
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  92.57
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  74.88
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  69.34
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  65.18
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  95.39
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  46.26
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  78.6
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "electron",
+                     "run":  2,
+                     "appPid":  75896,
+                     "startupMs":  596,
+                     "internalStartupMs":  476,
+                     "memAt5s":  {
+                                     "processes":  4,
+                                     "workingSetMB":  1077.3,
+                                     "privateMB":  812.2
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  4,
+                                         "workingSetMB":  1102.6,
+                                         "privateMB":  835.7
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  61.200000047683709
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  47.799999952316291
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  16.699999928474426
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  15
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  36.899999976158142
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  27.900000095367432
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  18.800000071525577
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  14.5
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  37.399999976158142
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  29.399999976158146
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  15.100000023841858
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  15.199999928474426
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "electron",
+                     "run":  3,
+                     "appPid":  26048,
+                     "startupMs":  549,
+                     "internalStartupMs":  434,
+                     "memAt5s":  {
+                                     "processes":  4,
+                                     "workingSetMB":  1042.3,
+                                     "privateMB":  779.4
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  4,
+                                         "workingSetMB":  1104.7,
+                                         "privateMB":  840.3
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  66.100000023841858
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  50.5
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  16.700000047683716
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  16.100000023841858
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  35.600000023841858
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  29.5
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  5.6000000238418579
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  15.199999928474426
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  37.300000071525574
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  27.899999976158146
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  16.399999976158142
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  16.300000071525574
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "aot",
+                     "run":  3,
+                     "appPid":  40680,
+                     "startupMs":  499,
+                     "internalStartupMs":  499,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  410.5,
+                                     "privateMB":  378.6
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  459.4,
+                                         "privateMB":  395
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  131.17
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  183.41
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  135.41
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  71.1
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  71.81
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  91.73
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  51.49
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  68.62
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  66.25
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  101.04
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  48.28
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  95.31
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "winui",
+                     "run":  3,
+                     "appPid":  35256,
+                     "startupMs":  824,
+                     "internalStartupMs":  824,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  468.3,
+                                     "privateMB":  398.5
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  513.2,
+                                         "privateMB":  409.4
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  156.95
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  195.91
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  87.39
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  76.75
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  80.76
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  94.24
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  42.28
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  82.69
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  72.71
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  98.9
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  49.57
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  70.83
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "winui",
+                     "run":  4,
+                     "appPid":  15748,
+                     "startupMs":  657,
+                     "internalStartupMs":  657,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  470.8,
+                                     "privateMB":  402.4
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  515.2,
+                                         "privateMB":  412.5
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  132.05
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  218.59
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  82.94
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  70.33
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  65.59
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  98.48
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  48.41
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  76.83
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  69.56
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  110.55
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  45.12
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  71.67
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "aot",
+                     "run":  4,
+                     "appPid":  80920,
+                     "startupMs":  461,
+                     "internalStartupMs":  461,
+                     "memAt5s":  {
+                                     "processes":  null,
+                                     "workingSetMB":  417.8,
+                                     "privateMB":  386.1
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  null,
+                                         "workingSetMB":  463,
+                                         "privateMB":  398.6
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  122.46
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  160.93
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  81.8
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  69.47
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  74.03
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  95.24
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  48.94
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  74.56
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  62.62
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  100.84
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  77.39
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  83.98
+                                 }
+                             ]
+                 },
+                 {
+                     "kind":  "electron",
+                     "run":  4,
+                     "appPid":  67708,
+                     "startupMs":  452,
+                     "internalStartupMs":  343,
+                     "memAt5s":  {
+                                     "processes":  4,
+                                     "workingSetMB":  1092,
+                                     "privateMB":  830.2
+                                 },
+                     "memAfterNav":  {
+                                         "processes":  4,
+                                         "workingSetMB":  1090.5,
+                                         "privateMB":  824.1
+                                     },
+                     "nav":  [
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  0,
+                                     "ms":  59.799999952316291
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  0,
+                                     "ms":  42.600000023841858
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  0,
+                                     "ms":  16.299999952316284
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  0,
+                                     "ms":  16.300000071525574
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  1,
+                                     "ms":  44.5
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  1,
+                                     "ms":  30.399999976158146
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  1,
+                                     "ms":  15.600000023841858
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  1,
+                                     "ms":  16
+                                 },
+                                 {
+                                     "page":  "aircraft",
+                                     "round":  2,
+                                     "ms":  36.799999952316291
+                                 },
+                                 {
+                                     "page":  "workorders",
+                                     "round":  2,
+                                     "ms":  29.299999952316284
+                                 },
+                                 {
+                                     "page":  "inspections",
+                                     "round":  2,
+                                     "ms":  15.299999952316284
+                                 },
+                                 {
+                                     "page":  "fleet",
+                                     "round":  2,
+                                     "ms":  11.700000047683716
+                                 }
+                             ]
+                 }
+             ],
+    "cpuRuns":  [
+                    {
+                        "kind":  "winui",
+                        "page":  "Fleet",
+                        "cpu":  {
+                                    "pctOneCore":  7.3,
+                                    "pctMachine":  0.61
+                                },
+                        "mem":  {
+                                    "processes":  null,
+                                    "workingSetMB":  247,
+                                    "privateMB":  159
+                                }
+                    },
+                    {
+                        "kind":  "aot",
+                        "page":  "Fleet",
+                        "cpu":  {
+                                    "pctOneCore":  5.7,
+                                    "pctMachine":  0.47
+                                },
+                        "mem":  {
+                                    "processes":  null,
+                                    "workingSetMB":  207.9,
+                                    "privateMB":  150.3
+                                }
+                    },
+                    {
+                        "kind":  "electron",
+                        "page":  "Fleet",
+                        "cpu":  {
+                                    "pctOneCore":  22.6,
+                                    "pctMachine":  1.88
+                                },
+                        "mem":  {
+                                    "processes":  4,
+                                    "workingSetMB":  432.4,
+                                    "privateMB":  265.1
+                                }
+                    },
+                    {
+                        "kind":  "winui",
+                        "page":  "Aircraft",
+                        "cpu":  {
+                                    "pctOneCore":  67.1,
+                                    "pctMachine":  5.59
+                                },
+                        "mem":  {
+                                    "processes":  null,
+                                    "workingSetMB":  352.2,
+                                    "privateMB":  258.4
+                                }
+                    },
+                    {
+                        "kind":  "aot",
+                        "page":  "Aircraft",
+                        "cpu":  {
+                                    "pctOneCore":  68.3,
+                                    "pctMachine":  5.69
+                                },
+                        "mem":  {
+                                    "processes":  null,
+                                    "workingSetMB":  308.6,
+                                    "privateMB":  247.4
+                                }
+                    },
+                    {
+                        "kind":  "electron",
+                        "page":  "Aircraft",
+                        "cpu":  {
+                                    "pctOneCore":  118,
+                                    "pctMachine":  9.83
+                                },
+                        "mem":  {
+                                    "processes":  4,
+                                    "workingSetMB":  867.4,
+                                    "privateMB":  692
+                                }
+                    }
+                ]
+}
