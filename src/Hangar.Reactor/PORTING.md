@@ -28,6 +28,24 @@ The Reactor project links these files from `..\Hangar.WinUI` (see `Hangar.Reacto
 | `Pages\InspectionsPage.cs` | Borescope viewer with ink annotation, finding card, signature, sign & release burst |
 | `Ink\InkSurface.cs` | Win2D ink surface used for annotations and the signature |
 
+## Ask Hangar
+
+![Ask Hangar in Reactor](../../docs/screenshots/reactor/ask-hangar.png)
+
+The on-device chat pane is the one exception to "no XAML". The project links `Controls\AskHangarPane.xaml(.cs)`, `Controls\WrapPanel.cs` and the `Services\*Model*.cs`, `AskContextBuilder.cs`, `ScriptedResponder.cs` and `LocalModelService.cs` files from `..\Hangar.WinUI`, and `App.cs` hosts the pane in a 420px inline column through `XamlHostElement`. The page content reflows, as in the WinUI app.
+
+- **`HANGAR_REACTOR` define:** compiles out the WinUI-only `NavigationService` and `Hangar.Views` references. Reactor sets `AskHangarPane.PageProvider` so suggestion chips and grounding follow the current Reactor page, and calls `RefreshSuggestions()` on navigation.
+- **Backend chain:** Aion Instruct (preview) → Phi Silica → `ScriptedResponder`, with the same badge, grounding and `[[chip]]` contract. `LocalModelService.InitializeAsync` starts in the background at launch.
+- **Aion:** `Hangar.Reactor.csproj` auto-enables Aion when the nupkg is in the repo's git-ignored `nuget-local\`, exactly like the WinUI project. It injects the framework and WAR 2 dependencies into a manifest copy under `obj\`, so the committed `Package.appxmanifest` stays clean. Run `scripts\Setup-Aion.ps1` once per machine.
+- **Chips → Reactor navigation:**
+  - Flight 44 opens Aircraft with `AircraftNavigationArgs.Flight = 44`.
+  - Fan blade 14 opens Aircraft with Engine 2 exploded and the blade selected.
+  - `wo:` opens Work Orders with `WorkOrdersNavigationArgs(Query)`.
+  - Borescope opens Inspections.
+- **Use in sign-off:** fills the Inspections RELEASE ENTRY box through `NotesPrefill`. It never signs; the caption reads "AI drafted · Engineer signs".
+- **Shortcuts:** **Ctrl+Space** toggles the pane, **Ctrl+Shift+A** forces scripted mode, and **Ctrl+Shift+D** (demo reset) also clears the chat.
+- **DEBUG capture:** create `LocalState\askcapture.flag` before launch to capture `ask-hangar.png`, `ask-hangar-logbook.png` and `ask-hangar-light.png` into `docs\screenshots\reactor`.
+
 ## Replacements and known limits
 
 - **Win2D:** the hologram, charts, sparklines, ink and signature all draw through `Win2DCanvas` from `Microsoft.UI.Reactor.Advanced.Win2D`. The hologram animates from `CompositionTarget.Rendering`.

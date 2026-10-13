@@ -11,11 +11,11 @@ namespace Hangar.Reactor;
 
 public enum PageKind { Fleet, Aircraft, WorkOrders, Inspections }
 
-public sealed record AircraftNavigationArgs(string Tail, EnginePart Part = EnginePart.None, bool FromFleetTile = false);
+public sealed record AircraftNavigationArgs(string Tail, EnginePart Part = EnginePart.None, bool FromFleetTile = false, int? Flight = null);
 
 public sealed record WorkOrdersNavigationArgs(string Query);
 
-public sealed record InspectionNavigationArgs(string Tail, string Finding);
+public sealed record InspectionNavigationArgs(string Tail, string Finding, string? NotesPrefill = null);
 
 /// <summary>Current page plus its argument. <see cref="Nonce"/> changes on every navigation so pages remount.</summary>
 public sealed record Route(PageKind Page, object? Arg, int Nonce);

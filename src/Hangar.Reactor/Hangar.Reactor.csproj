@@ -78,6 +78,63 @@
     <NoWarn>$(NoWarn);CS8305;WMC1501</NoWarn>
   </PropertyGroup>
 
+  <!-- Ask Hangar: share the on-device model chain (Aion -> Phi Silica -> scripted) with the XAML app. -->
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);HANGAR_REACTOR</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Hangar.WinUI\Services\AskChips.cs" Link="Shared\Services\AskChips.cs" />
+    <Compile Include="..\Hangar.WinUI\Services\AskContextBuilder.cs" Link="Shared\Services\AskContextBuilder.cs" />
+    <Compile Include="..\Hangar.WinUI\Services\AskLog.cs" Link="Shared\Services\AskLog.cs" />
+    <Compile Include="..\Hangar.WinUI\Services\IAskModel.cs" Link="Shared\Services\IAskModel.cs" />
+    <Compile Include="..\Hangar.WinUI\Services\LocalModelService.cs" Link="Shared\Services\LocalModelService.cs" />
+    <Compile Include="..\Hangar.WinUI\Services\PhiSilicaModel.cs" Link="Shared\Services\PhiSilicaModel.cs" />
+    <Compile Include="..\Hangar.WinUI\Services\ScriptedResponder.cs" Link="Shared\Services\ScriptedResponder.cs" />
+    <Compile Include="..\Hangar.WinUI\Controls\WrapPanel.cs" Link="Shared\Controls\WrapPanel.cs" />
+    <Page Include="..\Hangar.WinUI\Controls\AskHangarPane.xaml" Link="Controls\AskHangarPane.xaml" />
+    <Compile Include="..\Hangar.WinUI\Controls\AskHangarPane.xaml.cs" Link="Controls\AskHangarPane.xaml.cs" DependentUpon="AskHangarPane.xaml" />
+    <Compile Include="..\Hangar.WinUI\Services\AionModel.cs" Link="Shared\Services\AionModel.cs" Condition="'$(EnableAion)' == 'true'" />
+  </ItemGroup>
+
+  <!--
+    Aion Instruct (preview), aka.ms/tryaion. Same switch as the XAML app: auto-enabled only when
+    the SDK nupkg sits in the git-ignored <repo>/nuget-local/ feed; force with -p:EnableAion=true|false.
+    The Aion / Windows App Runtime 2 package dependencies are injected into an intermediate copy of
+    the manifest, so the committed Package.appxmanifest stays clean.
+  -->
+  <PropertyGroup>
+    <HangarAionFeed>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..\nuget-local'))</HangarAionFeed>
+    <HangarAionPackageVersion>1.0.1</HangarAionPackageVersion>
+    <EnableAion Condition="'$(EnableAion)' == '' and Exists('$(HangarAionFeed)AionInstructPreview.Text.Framework.$(HangarAionPackageVersion).nupkg')">true</EnableAion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(EnableAion)' == 'true'">
+    <DefineConstants>$(DefineConstants);HANGAR_AION</DefineConstants>
+    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(HangarAionFeed)</RestoreAdditionalProjectSources>
+    <NoWarn>$(NoWarn);NU1603</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableAion)' == 'true'">
+    <PackageReference Include="AionInstructPreview.Text.Framework" Version="[$(HangarAionPackageVersion)]" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.1.5" />
+  </ItemGroup>
+  <Target Name="HangarAionRedirectManifest"
+          BeforeTargets="PrepareForBuild;AionInstructPreviewText_InjectPackageDependency;_GenerateAppxManifest;GenerateAppxManifest"
+          Condition="'$(EnableAion)' == 'true' and '@(AppxManifest)' != '' and '$(_HangarAionManifestRedirected)' != 'true'">
+    <PropertyGroup>
+      <_HangarAionManifest>$(ProjectDir)$(IntermediateOutputPath)aion\Package.appxmanifest</_HangarAionManifest>
+      <_HangarAionManifestRedirected>true</_HangarAionManifestRedirected>
+    </PropertyGroup>
+    <Copy SourceFiles="@(AppxManifest)" DestinationFiles="$(_HangarAionManifest)" />
+    <ItemGroup>
+      <AppxManifest Remove="@(AppxManifest)" />
+      <AppxManifest Include="$(_HangarAionManifest)" />
+    </ItemGroup>
+    <Message Importance="high" Text="[Hangar.Reactor] Aion Instruct (preview) enabled; manifest dependencies injected into $(_HangarAionManifest)" />
+  </Target>
+  <Target Name="HangarAionInjectEarly"
+          AfterTargets="HangarAionRedirectManifest"
+          DependsOnTargets="AionInstructPreviewText_InjectPackageDependency"
+          Condition="'$(EnableAion)' == 'true'" />
+
   <!--
     Debug-only: enable the Reactor devtools surface so the devtools F5 profile
     (in Properties/launchSettings.json) lights up the devtools menu. Release /

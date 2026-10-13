@@ -17,7 +17,7 @@ The app exists in three implementations of the same UI, so this repo doubles as 
 | | Folder | Stack | Run |
 |---|---|---|---|
 | **WinUI 3** (reference) | [`src/Hangar.WinUI`](src/Hangar.WinUI) | XAML + MVVM, WinAppSDK 2.5.4-experimental, Win2D, Native AOT | `cd src\Hangar.WinUI; winapp run .` |
-| **Reactor** | [`src/Hangar.Reactor`](src/Hangar.Reactor) | Microsoft.UI.Reactor function components (no XAML); shares models, services and the Win2D stage with the WinUI project. Notes: [`PORTING.md`](src/Hangar.Reactor/PORTING.md) | `cd src\Hangar.Reactor; winapp run .` |
+| **Reactor** | [`src/Hangar.Reactor`](src/Hangar.Reactor) | Microsoft.UI.Reactor function components (no XAML); shares models, services and the Win2D stage with the WinUI project. Includes Ask Hangar (same model chain, hosted XAML pane). Notes: [`PORTING.md`](src/Hangar.Reactor/PORTING.md) | `cd src\Hangar.Reactor; winapp run .` |
 | **Electron** | [`src/Hangar.Electron`](src/Hangar.Electron) | Electron 41, plain HTML/CSS/JS + Canvas 2D | `cd src\Hangar.Electron; npm ci; npm start` |
 
 Both .NET projects are in [`Hangar.slnx`](Hangar.slnx). The WinUI and Reactor builds are packaged (MSIX loose layout) and use different package identities, so they can be installed side by side.
@@ -226,6 +226,13 @@ Runtime behaviour:
 - Citation chips (`[[flight:44]]`, `[[part:fanblade14]]`, `[[wo:…]]`, `[[nav:…]]`) are always appended deterministically from a keyword match on the answer and grounding context. Model-emitted markers are never trusted.
 - The logbook draft only **pre-fills** the Inspections release entry ("AI drafted · Engineer signs"). The engineer still signs.
 - Diagnostics are logged to the debug output with the `[AskHangar]` prefix.
+
+##### In the Reactor port
+The Reactor app links the same pane and services (Aion → Phi Silica → scripted, same grounding and chips) and hosts the pane through `XamlHostElement`. The Aion auto-enable works the same way. See [`PORTING.md`](src/Hangar.Reactor/PORTING.md#ask-hangar).
+
+![Ask Hangar in Reactor](docs/screenshots/reactor/ask-hangar.png)
+![Ask Hangar logbook draft in Reactor](docs/screenshots/reactor/ask-hangar-logbook.png)
+![Ask Hangar in Reactor, light theme](docs/screenshots/reactor/ask-hangar-light.png)
 
 #### Testing
 - Pointer flows were verified manually and through the debug start hook, not with UI automation; the dev desktop was shared. These flows are drag-orbit, ink, signature and connected animation.

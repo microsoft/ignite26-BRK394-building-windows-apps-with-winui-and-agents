@@ -38,7 +38,7 @@ public sealed class AircraftPage : HangarComponent<PageProps>
         var canvasRef = UseRef<CanvasControl?>(null);
         var stageRef = UseRef<FrameworkElement?>(null);
 
-        var (scrub, setScrub) = UseState(Flights - 1);
+        var (scrub, setScrub) = UseState(p.Arg is AircraftNavigationArgs { Flight: int f } ? Math.Clamp(f - 1, 0, Flights - 1) : Flights - 1);
         var (part, setPart) = UseState(EnginePart.None);
         var (exploded, setExploded) = UseState(false);
 

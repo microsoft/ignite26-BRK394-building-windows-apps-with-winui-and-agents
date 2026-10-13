@@ -39,7 +39,9 @@ public sealed partial class AskHangarPane : UserControl
             RefreshMode();
             RefreshSuggestions();
         };
+#if !HANGAR_REACTOR
         NavigationService.Navigated += (_, _) => DispatcherQueue.TryEnqueue(RefreshSuggestions);
+#endif
     }
 
     public event EventHandler<AskChip>? ChipInvoked;
@@ -136,9 +138,18 @@ public sealed partial class AskHangarPane : UserControl
         FooterText.Text = svc.FooterText;
     }
 
-    private void RefreshSuggestions()
+#if HANGAR_REACTOR
+    /// <summary>Reactor host supplies the current page name ("Aircraft", "WorkOrders", ...).</summary>
+    public static Func<string>? PageProvider { get; set; }
+
+    private static string CurrentPageName() => PageProvider?.Invoke() ?? "Fleet";
+#else
+    private static string CurrentPageName() => AskContextBuilder.PageName(NavigationService.CurrentPage);
+#endif
+
+    public void RefreshSuggestions()
     {
-        var page = AskContextBuilder.PageName(NavigationService.CurrentPage);
+        var page = CurrentPageName();
         Suggestions.Children.Clear();
         foreach (var question in AskContextBuilder.Suggestions(page))
         {
@@ -222,7 +233,7 @@ public sealed partial class AskHangarPane : UserControl
         EmptyState.Visibility = Visibility.Collapsed;
         AddUserBubble(question);
 
-        var page = AskContextBuilder.PageName(NavigationService.CurrentPage);
+        var page = CurrentPageName();
         var intent = AskContextBuilder.DetectIntent(question, page);
         var row = new AnswerRow(this);
         Messages.Children.Add(row.Root);

@@ -79,6 +79,9 @@ public sealed class InspectionsPage : HangarComponent<PageProps>
         var flashTimer = UseRef<Microsoft.UI.Dispatching.DispatcherQueueTimer?>(null);
 
         var hologramTail = (p.Arg as InspectionNavigationArgs)?.Tail;
+        var prefill = (p.Arg as InspectionNavigationArgs)?.NotesPrefill;
+        var (notes, setNotes) = UseState(prefill ?? "");
+        UseEffect(() => { if (prefill is not null) setNotes(prefill); }, prefill ?? "");
 
         Color Res(FrameworkElement? fe, string key) => fe is null ? Microsoft.UI.Colors.Transparent : Col(fe, key);
 
@@ -104,6 +107,7 @@ public sealed class InspectionsPage : HangarComponent<PageProps>
                 setTool(InkTool.Pen);
                 setPenColor(PenColors[0]);
                 setSigning(false);
+                setNotes("");
                 burst.Current = null;
                 arrival.Current = null;
                 InvalidateAll();
@@ -507,9 +511,18 @@ public sealed class InspectionsPage : HangarComponent<PageProps>
                     ]).Set(g => g.ColumnSpacing = 12),
                 Border(HStack(8,
                         Glyph("\uE73E", 14).Foreground(B("HealthyBrush")),
-                        Body("Within serviceable limits · blend not required").Foreground(B("HealthyBrush"))
+                        Body("Within blend limits · AMM 72-21").Foreground(B("HealthyBrush"))
                             .VAlign(VerticalAlignment.Center)))
                     .Background(B("HealthySoftBrush")).CornerRadius(8).Padding(12, 8),
+                VStack(6,
+                    Eyebrow("RELEASE ENTRY"),
+                    TextBox(notes, setNotes, "Release entry…")
+                        .Set(tb => { tb.AcceptsReturn = true; tb.TextWrapping = TextWrapping.Wrap; })
+                        .MinHeight(64)
+                        .AutomationId("InspectionReleaseEntry").AutomationName("Release entry"),
+                    prefill is not null
+                        ? Body("AI drafted · Engineer signs").Foreground(Tertiary).AutomationId("AiDraftedNote")
+                        : Empty()),
                 Border(Empty()).Height(1).Background(B("GlassStrokeBrush")),
                 Grid([GridSize.Auto, GridSize.Star(1)], [GridSize.Auto],
                     [
@@ -544,6 +557,7 @@ public sealed class InspectionsPage : HangarComponent<PageProps>
                     .AutomationId("ReleaseNote")))
             .Background(B("GlassBrush")).BorderBrush(B("GlassStrokeBrush")).BorderThickness(1).CornerRadius(16)
             .Padding(24).VAlign(VerticalAlignment.Center)
+            .MinWidth(340)
             .AutomationId("SignOffPanel");
 
         // ── Released banner (fades + rises in once, right after signing) ──

@@ -2,7 +2,9 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Hangar.Models;
+#if !HANGAR_REACTOR
 using Hangar.Views;
+#endif
 
 namespace Hangar.Services;
 
@@ -19,6 +21,7 @@ public static class AskContextBuilder
     public const string InspectionsQuestion = "Draft the logbook entry";
     public const string WhatNextQuestion = "What do I need to do before 06:15?";
 
+#if !HANGAR_REACTOR
     public static string PageName(Type? page) => page switch
     {
         _ when page == typeof(AircraftPage) => "Aircraft",
@@ -26,6 +29,7 @@ public static class AskContextBuilder
         _ when page == typeof(InspectionsPage) => "Inspections",
         _ => "Fleet",
     };
+#endif
 
     public static AskIntent DetectIntent(string question, string page)
     {

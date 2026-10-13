@@ -1,3 +1,4 @@
+using Hangar.Controls;
 using Hangar.Models;
 using Hangar.Reactor;
 using Hangar.Reactor.Pages;
@@ -6,6 +7,7 @@ using Hangar.ViewModels;
 using Microsoft.UI.Input;
 using Microsoft.UI.Reactor;
 using Microsoft.UI.Reactor.Core;
+using Microsoft.UI.Reactor.Hosting;
 using Microsoft.UI.Reactor.Layout;
 using Microsoft.UI.Xaml;
 using Windows.System;
@@ -16,7 +18,7 @@ using static Microsoft.UI.Reactor.Factories;
 #if DEBUG
 DebugLog.Install();
 #endif
-ReactorApp.Run<App>("HANGAR · Contoso Aero", 1707, 1067);
+ReactorApp.Run<App>(new WindowSpec { Title = "HANGAR · Contoso Aero", Width = 1707, Height = 1067 }, host => XamlInterop.Register(host.Reconciler));
 
 #if DEBUG
 static class DebugLog
@@ -68,6 +70,45 @@ class App : Component
 #if DEBUG
     static bool _autoCaptureStarted;
 #endif
+
+    // Ask Hangar reuses the WinUI app's XAML pane (linked source) through Reactor's XAML interop.
+    const string HeroFinding = "Fan blade 14 · leading-edge nick";
+    static AskHangarPane? _pane;
+    static Action<PageKind, object?>? _askNavigate;
+
+    static AskHangarPane EnsurePane()
+    {
+        if (_pane is not null) return _pane;
+        var pane = new AskHangarPane();
+        Microsoft.UI.Xaml.Controls.Grid.SetColumn(pane, 1);
+        pane.ChipInvoked += (_, chip) => _askNavigate?.Invoke(chip.Kind switch
+        {
+            AskChipKind.Flight or AskChipKind.Part => PageKind.Aircraft,
+            AskChipKind.Nav when chip.Value == "inspections" => PageKind.Inspections,
+            _ => PageKind.WorkOrders,
+        }, chip.Kind switch
+        {
+            AskChipKind.Flight => new AircraftNavigationArgs(FleetDataService.HeroTail, Flight: int.TryParse(chip.Value, out var f) ? f : 44),
+            AskChipKind.Part => new AircraftNavigationArgs(FleetDataService.HeroTail, EnginePart.Fan),
+            AskChipKind.WorkOrder => new WorkOrdersNavigationArgs(chip.Label),
+            AskChipKind.Nav when chip.Value == "inspections" => new InspectionNavigationArgs(FleetDataService.HeroTail, HeroFinding),
+            _ => null,
+        });
+        pane.UseInSignOffRequested += (_, entry) =>
+            _askNavigate?.Invoke(PageKind.Inspections, new InspectionNavigationArgs(FleetDataService.HeroTail, HeroFinding, entry));
+        var queue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        LocalModelService.Instance.ModeChanged += (_, _) => queue.TryEnqueue(pane.RefreshMode);
+        _ = LocalModelService.Instance.InitializeAsync();
+        return _pane = pane;
+    }
+
+    // The pane is a singleton so chat history survives page navigation; detach it from any previous host grid.
+    static Element AskPaneHost() => new XamlHostElement(() =>
+    {
+        var p = EnsurePane();
+        if (p.Parent is Microsoft.UI.Xaml.Controls.Panel old) old.Children.Remove(p);
+        return p;
+    }, _ => { }).Grid(0, 1);
 
     static void EnsureResources()
     {
@@ -127,6 +168,8 @@ class App : Component
         var searchRef = UseRef<Microsoft.UI.Xaml.Controls.AutoSuggestBox?>(null);
         var chosenRef = UseRef<SearchSuggestion?>(null);
         var suggestionsRef = UseRef<(IReadOnlyList<SearchSuggestion>? Source, List<SearchSuggestion> Items)>((null, []));
+        var askTextRef = UseRef(string.Empty);
+        var askKeyRef = UseRef(string.Empty);
         var vmRef = UseRef<ShellViewModel?>(null);
         vmRef.Current ??= new ShellViewModel(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
         var vm = vmRef.Current;
@@ -135,6 +178,9 @@ class App : Component
         {
             setRoute(new Route(page, arg, routeRef.Current.Nonce + 1));
         }
+        _askNavigate = Navigate;
+        AskHangarPane.PageProvider = () => routeRef.Current.Page.ToString();
+        UseEffect(() => _pane?.RefreshSuggestions(), [route.Page]);
 
         UseEffect(() =>
         {
@@ -157,6 +203,7 @@ class App : Component
         void ResetDemo()
         {
             FleetDataService.Instance.ResetDemo();
+            _pane?.Clear();
             Navigate(PageKind.Fleet, null);
             setResetVisible(true);
             var q = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
@@ -173,7 +220,14 @@ class App : Component
 
         void Submit(SearchSuggestion? pick, string text)
         {
-            pick ??= vm.Suggestions.FirstOrDefault();
+            pick ??= suggestionsRef.Current.Items.FirstOrDefault();
+            if (pick?.Target is "ask")
+            {
+                var question = askTextRef.Current.Trim();
+                ClearSearch();
+                EnsurePane().OpenAndAsk(question);
+                return;
+            }
             switch (pick?.Target)
             {
                 case Aircraft ac:
@@ -192,20 +246,30 @@ class App : Component
 
         // The ASB's ItemsSource needs an IList; only swap it when the VM publishes a new list
         // so unrelated re-renders (the clock ticks every second) keep keyboard selection intact.
-        if (!ReferenceEquals(suggestionsRef.Current.Source, vm.Suggestions))
-            suggestionsRef.Current = (vm.Suggestions, vm.Suggestions.ToList());
+        // Any non-empty query also offers "Ask Hangar: <query>" (opens the on-device pane).
+        if (!ReferenceEquals(suggestionsRef.Current.Source, vm.Suggestions) || askKeyRef.Current != askTextRef.Current)
+        {
+            var items = vm.Suggestions.ToList();
+            var q = askTextRef.Current.Trim();
+            if (q.Length > 0)
+                items.Add(new SearchSuggestion("\uE945", $"Ask Hangar: {q}", "On-device answer", "ask"));
+            suggestionsRef.Current = (vm.Suggestions, items);
+            askKeyRef.Current = askTextRef.Current;
+        }
         var suggestionItems = suggestionsRef.Current.Items;
 
         var search = AutoSuggestBox(
                 onTextChanged: text =>
                 {
                     chosenRef.Current = null;
+                    askTextRef.Current = text ?? string.Empty;
                     vm.UpdateSuggestions(text);
+                    bump(++bumpRef.Current);
                 },
                 onQuerySubmitted: text => Submit(chosenRef.Current, text))
             .PlaceholderText("Search tail, part, or work order")
             .QueryIcon(new SymbolIconData("Find"))
-            .SuggestionChosen(title => chosenRef.Current = vm.Suggestions.FirstOrDefault(s => s.Title == title))
+            .SuggestionChosen(title => chosenRef.Current = suggestionsRef.Current.Items.FirstOrDefault(s => s.Title == title))
             .Set(asb =>
             {
                 asb.UpdateTextOnSelect = false;
@@ -238,7 +302,16 @@ class App : Component
             .BorderThickness(0).Padding(0)
             .ToolTip("Open CA 2207").AutomationId("DepartureCountdownChip").AutomationName("Open CA 2207 departure status");
 
+        var askButton = Button(HStack(6,
+                    Glyph("\uE945", 14).Foreground(B("AccentCyanBrush")).VAlign(VerticalAlignment.Center),
+                    TextBlock("Ask Hangar").FontSize(13).VAlign(VerticalAlignment.Center)),
+                () => EnsurePane().Toggle())
+            .ToolTip("Ask Hangar (Ctrl+Space)")
+            .AutomationId("AskHangarButton").AutomationName("Ask Hangar")
+            .VAlign(VerticalAlignment.Center);
+
         var rightHeader = HStack(12,
+                askButton,
                 Mono(vm.ClockText, 13).Foreground(Tertiary).VAlign(VerticalAlignment.Center),
                 chipButton.VAlign(VerticalAlignment.Center),
                 PersonPicture().DisplayName("Maya Okafor").Width(32).Height(32).ToolTip("Maya Okafor · Shift lead")
@@ -282,7 +355,7 @@ class App : Component
                     Nav("Work Orders", "\uE9F9", PageKind.WorkOrders),
                     Nav("Inspections", "\uEDC6", PageKind.Inspections),
                 ],
-                Grid([GridSize.Star(1)], [GridSize.Star(1)], [page, resetBar])) with { SelectedTag = route.Page.ToString() })
+                Grid([GridSize.Star(1), GridSize.Auto], [GridSize.Star(1)], [page, resetBar, AskPaneHost()])) with { SelectedTag = route.Page.ToString() })
             .PaneDisplayMode(Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode.Left)
             .PaneVisible(true)
             .PaneToggleButtonVisible(false)
@@ -298,7 +371,11 @@ class App : Component
 
         var root = FlexColumn(titleBar, nav).Background(B("CanvasTintBrush"));
 #if DEBUG
-        root = root.OnMount(fe => AutoCapture(fe, setTheme, Navigate));
+        root = root.OnMount(fe =>
+        {
+            AutoCapture(fe, setTheme, Navigate);
+            AskCapture(fe, setTheme, Navigate);
+        });
 #endif
 
         return root
@@ -316,6 +393,20 @@ class App : Component
                 else if (ctrl && shift && e.Key == VirtualKey.D)
                 {
                     ResetDemo();
+                    e.Handled = true;
+                }
+                else if (ctrl && !shift && e.Key == VirtualKey.Space)
+                {
+                    EnsurePane().Toggle();
+                    e.Handled = true;
+                }
+                else if (ctrl && shift && e.Key == VirtualKey.A)
+                {
+                    var svc = LocalModelService.Instance;
+                    svc.ForceScripted = !svc.ForceScripted;
+                    var pane = EnsurePane();
+                    pane.RefreshMode();
+                    pane.Open();
                     e.Handled = true;
                 }
                 else if (ctrl && !shift && e.Key == VirtualKey.K)
@@ -364,6 +455,42 @@ class App : Component
             if (fe.XamlRoot?.Content is UIElement root)
                 await DebugCapture.SaveAsync(root, $"{name}-{(dark ? "dark" : "light")}.png", dark);
         }
+        setTheme(ElementTheme.Dark);
+        navigate(PageKind.Fleet, null);
+    }
+
+    static bool _askCaptureStarted;
+
+    // Drops `askcapture.flag` in LocalState to stream the three Ask Hangar stage moments and save window-only shots.
+    static async void AskCapture(FrameworkElement fe, Action<ElementTheme> setTheme, Action<PageKind, object?> navigate)
+    {
+        if (_askCaptureStarted) return;
+        _askCaptureStarted = true;
+        var flag = Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, "askcapture.flag");
+        if (!File.Exists(flag)) flag = Path.Combine(AppContext.BaseDirectory, "askcapture.flag");
+        if (!File.Exists(flag)) return;
+        try { File.Delete(flag); } catch { }
+
+        await Task.Delay(4000);
+        (string name, PageKind page, string question, bool dark)[] shots =
+        [
+            ("ask-hangar.png", PageKind.Aircraft, "Why is 2207 held, and what changed?", true),
+            ("ask-hangar-logbook.png", PageKind.Inspections, "Draft the logbook entry", true),
+            ("ask-hangar-light.png", PageKind.Aircraft, "Why is 2207 held, and what changed?", false),
+        ];
+        foreach (var (name, page, question, dark) in shots)
+        {
+            setTheme(dark ? ElementTheme.Dark : ElementTheme.Light);
+            navigate(page, page == PageKind.Aircraft ? new AircraftNavigationArgs(FleetDataService.HeroTail) : null);
+            await Task.Delay(2500);
+            var pane = EnsurePane();
+            pane.Clear();
+            pane.OpenAndAsk(question);
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            if (fe.XamlRoot?.Content is UIElement root)
+                await DebugCapture.SaveAsync(root, name, dark);
+        }
+        EnsurePane().Close();
         setTheme(ElementTheme.Dark);
         navigate(PageKind.Fleet, null);
     }
