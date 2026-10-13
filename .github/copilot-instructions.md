@@ -1,0 +1,1 @@
+See [`AGENTS.md`](../AGENTS.md). To set up or repair Ask Hangar's Aion Instruct (preview) backend on a machine, use the `hangar-aion-setup` skill in `.github/skills/` (it runs `scripts\Setup-Aion.ps1`).

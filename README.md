@@ -190,9 +190,15 @@ The result is "real 3D" in the sense of a projected 3D wireframe; it is not a li
 > [!WARNING]
 > Preview only. **Don't ship it, and don't commit the nupkg or the framework MSIX.** Output is watermarked and non-deterministic, so live answers vary between runs (the chips and the logbook draft stay deterministic). It needs an ARM64 Snapdragon (QNN) NPU.
 
-Setup (once per machine):
-1. Clone [microsoft/Aion-Instruct-Preview-Sample](https://github.com/microsoft/Aion-Instruct-Preview-Sample) and run its `Bootstrap.ps1`. It installs Windows App Runtime 2 and the Aion framework MSIX 1.0.0.3, and puts `AionInstructPreview.Text.Framework.1.0.1.nupkg` in its `nuget-local\`.
-2. Copy that nupkg into `nuget-local\` at the root of this repo. The folder is git-ignored.
+**Run it on your machine (once per machine).** From the repo root, either:
+- run `powershell -ExecutionPolicy Bypass -File scripts\Setup-Aion.ps1` (add `-CheckOnly` to only diagnose), or
+- ask GitHub Copilot: *"set up Aion for Hangar"*. The [`hangar-aion-setup`](.github/skills/hangar-aion-setup/SKILL.md) skill makes Copilot run the script, fix what it reports, build and verify.
+
+The script is idempotent. It checks and fixes Developer Mode, Windows App Runtime 2, the Aion framework MSIX 1.0.0.3, the SDK nupkg in the git-ignored `nuget-local\`, a stale NuGet cache entry and the QNN execution provider. It then builds and confirms that `Package.appxmanifest` stays clean. Then run `winapp run .` from `src\Hangar.WinUI`, press **Ctrl+Space**, and allow ~5 min for the first NPU compile.
+
+What it automates (manual equivalent):
+1. Install Windows App Runtime 2 and the Aion framework MSIX from the [v1.0.0.3 release](https://github.com/microsoft/Aion-Instruct-Preview-Sample/releases/tag/v1.0.0.3) (or run the sample's `Bootstrap.ps1`).
+2. Put `AionInstructPreview.Text.Framework.1.0.1.nupkg` into `nuget-local\` at the root of this repo. The folder is git-ignored.
 3. Build as usual. `Hangar.csproj` sees the nupkg and sets `EnableAion=true`, which:
    - defines `HANGAR_AION`, so `Services/AionModel.cs` compiles;
    - references the Aion SDK and `Microsoft.Windows.CsWinRT` 2.1.5 (it resolves to 2.2.0; NU1603 is suppressed);
