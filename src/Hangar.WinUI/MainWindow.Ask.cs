@@ -34,7 +34,7 @@ public sealed partial class MainWindow
         // Assign a fresh list so this works whatever collection shape the view model exposes.
         SearchBox.ItemsSource = new List<SearchSuggestion>(ViewModel.Suggestions)
         {
-            new("\uE945", $"Ask Hangar: {t}", "On-device answer · Phi Silica", new AskQuery(t)),
+            new("\uE945", $"Ask Hangar: {t}", LocalModelService.Instance.ActiveModelName is { } model ? $"On-device answer · {model}" : "On-device assistant", new AskQuery(t)),
         };
     }
 

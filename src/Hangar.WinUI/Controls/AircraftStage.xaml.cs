@@ -497,7 +497,12 @@ public sealed partial class AircraftStage : UserControl
         var center = new Vector2((left + w - right) / 2f, (top + h - bottom) / 2f);
         var availH = Math.Max(120f, h - top - bottom);
         var availW = Math.Max(120f, w - left - right);
-        var focal = Math.Min(availH, availW * 0.62f) / 2f / MathF.Tan(FieldOfView / 2f);
+        // Narrow gaps between the floating cards (e.g. with the Ask Hangar pane open) frame the plane
+        // tighter so the tail never runs under a card; wide gaps keep the original 0.62 framing.
+        var narrow = 1f - Math.Clamp((availW - 320f) / 280f, 0f, 1f);
+        narrow = narrow * narrow * (3f - 2f * narrow);
+        var widthFactor = 0.62f - 0.18f * narrow;
+        var focal = Math.Min(availH, availW * widthFactor) / 2f / MathF.Tan(FieldOfView / 2f);
 
         var eye = _target + _distance * new Vector3(
             MathF.Cos(_pitch) * MathF.Cos(_yaw), MathF.Sin(_pitch), MathF.Cos(_pitch) * MathF.Sin(_yaw));

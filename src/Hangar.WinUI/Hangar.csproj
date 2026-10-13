@@ -83,6 +83,50 @@
   </Target>
 
   <!--
+    Aion Instruct (preview), aka.ms/tryaion. Auto-enabled only when the SDK nupkg sits in the
+    git-ignored <repo>/nuget-local/ feed; force with -p:EnableAion=true|false. When enabled the
+    app takes a package dependency on the Aion framework + Windows App Runtime 2, so it is opt-in:
+    machines without the feed build and launch the plain (Phi Silica / scripted) app.
+  -->
+  <PropertyGroup>
+    <HangarAionFeed>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..\nuget-local'))</HangarAionFeed>
+    <HangarAionPackageVersion>1.0.1</HangarAionPackageVersion>
+    <EnableAion Condition="'$(EnableAion)' == '' and Exists('$(HangarAionFeed)AionInstructPreview.Text.Framework.$(HangarAionPackageVersion).nupkg')">true</EnableAion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(EnableAion)' == 'true'">
+    <DefineConstants>$(DefineConstants);HANGAR_AION</DefineConstants>
+    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(HangarAionFeed)</RestoreAdditionalProjectSources>
+    <NoWarn>$(NoWarn);NU1603</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(EnableAion)' == 'true'">
+    <PackageReference Include="AionInstructPreview.Text.Framework" Version="[$(HangarAionPackageVersion)]" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.1.5" />
+  </ItemGroup>
+  <!--
+    The Aion targets inject their PackageDependency entries by rewriting @(AppxManifest) in place.
+    Point them at an intermediate copy so the committed Package.appxmanifest stays clean, and run
+    the injection up front (PrepareForBuild) so the very first build already carries the deps.
+  -->
+  <Target Name="HangarAionRedirectManifest"
+          BeforeTargets="PrepareForBuild;AionInstructPreviewText_InjectPackageDependency;_GenerateAppxManifest;GenerateAppxManifest"
+          Condition="'$(EnableAion)' == 'true' and '@(AppxManifest)' != '' and '$(_HangarAionManifestRedirected)' != 'true'">
+    <PropertyGroup>
+      <_HangarAionManifest>$(ProjectDir)$(IntermediateOutputPath)aion\Package.appxmanifest</_HangarAionManifest>
+      <_HangarAionManifestRedirected>true</_HangarAionManifestRedirected>
+    </PropertyGroup>
+    <Copy SourceFiles="@(AppxManifest)" DestinationFiles="$(_HangarAionManifest)" />
+    <ItemGroup>
+      <AppxManifest Remove="@(AppxManifest)" />
+      <AppxManifest Include="$(_HangarAionManifest)" />
+    </ItemGroup>
+    <Message Importance="high" Text="[Hangar] Aion Instruct (preview) enabled; manifest dependencies injected into $(_HangarAionManifest)" />
+  </Target>
+  <Target Name="HangarAionInjectEarly"
+          AfterTargets="HangarAionRedirectManifest"
+          DependsOnTargets="AionInstructPreviewText_InjectPackageDependency"
+          Condition="'$(EnableAion)' == 'true'" />
+
+  <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
     Explorer "Package and Publish" context menu entry to be enabled for this project even if
     the Windows App SDK Nuget package has not yet been restored.

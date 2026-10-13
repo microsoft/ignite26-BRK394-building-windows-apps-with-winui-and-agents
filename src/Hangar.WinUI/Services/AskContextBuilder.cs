@@ -9,7 +9,7 @@ namespace Hangar.Services;
 public enum AskIntent { General, WhyHeld, SeenBefore, Logbook, WhatNext }
 
 /// <summary>
-/// Builds a compact grounding block for Phi Silica from real in-app data, and the page-aware
+/// Builds a compact grounding block for the on-device model from real in-app data, and the page-aware
 /// suggestion chips. Kept well inside the on-device model's context window (~1.2k chars).
 /// </summary>
 public static class AskContextBuilder
@@ -46,7 +46,14 @@ public static class AskContextBuilder
     };
 
     /// <summary>System instructions + grounding + the question, as one prompt string.</summary>
-    public static string BuildPrompt(string question, string page)
+    public static string BuildPrompt(string question, string page) =>
+        BuildSystemPrompt(page) + BuildUserPrompt(question, page);
+
+    /// <summary>
+    /// Stable instructions and grounding FACTS. Aion Instruct takes this through
+    /// CreateContext(systemPrompt); Phi Silica gets it prepended to the user turn.
+    /// </summary>
+    public static string BuildSystemPrompt(string page)
     {
         var data = FleetDataService.Instance;
         var inv = CultureInfo.InvariantCulture;
@@ -54,7 +61,6 @@ public static class AskContextBuilder
         var vib = data.Vibration;
         var baseline = vib.Take(FleetDataService.HailFlightIndex).Average();
         var hero = data.Hero;
-        var intent = DetectIntent(question, page);
 
         var sb = new StringBuilder(1400);
         sb.AppendLine("You are Ask Hangar, an offline assistant for airline maintenance engineers. Answer only from the FACTS. " +
@@ -81,7 +87,23 @@ public static class AskContextBuilder
             "Last year " + FleetDataService.RelatedFlight + " (" + data.RelatedTail + ") had the same Engine 2 fan blade 14 leading-edge nick" +
             (data.RelatedWorkOrderNumber > 0 ? " (WO-" + data.RelatedWorkOrderNumber.ToString(inv) + ")" : string.Empty) +
             ", blend repair per AMM 72-21, returned to service.");
+        return sb.ToString();
+    }
 
+    /// <summary>
+    /// The user turn: the task for this intent, the question quoted as data, and the
+    /// answer-only instruction last (per the Aion prompt guide; also fine for Phi Silica).
+    /// </summary>
+    public static string BuildUserPrompt(string question, string page)
+    {
+        var data = FleetDataService.Instance;
+        var inv = CultureInfo.InvariantCulture;
+        var leg = data.Legs[FleetDataService.HailFlightIndex];
+        var vib = data.Vibration;
+        var baseline = vib.Take(FleetDataService.HailFlightIndex).Average();
+        var intent = DetectIntent(question, page);
+
+        var sb = new StringBuilder(600);
         if (intent == AskIntent.Logbook)
         {
             sb.AppendLine($"- Maya's shorthand note: \"{ScriptedResponder.MayaShorthand}\" (bl=blade, LE=leading edge, wl=within limits).");
@@ -102,7 +124,8 @@ public static class AskContextBuilder
                 $"blended per AMM 72-21 and returned to service; this tail also had WO-{FleetDataService.PriorHeroFanWorkOrder} (blade 14 blend) and now WO-{FleetDataService.OpenHeroFanWorkOrder} is open."));
         }
 
-        sb.AppendLine("QUESTION: " + question.Trim());
+        sb.AppendLine("QUESTION: \"" + question.Trim().Replace("\"", "'", StringComparison.Ordinal) + "\"");
+        sb.Append("Answer the QUESTION using only the FACTS, in plain sentences, at most 90 words. Output only the answer.");
         return sb.ToString();
     }
 

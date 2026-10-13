@@ -10,7 +10,7 @@ public sealed record AskAnswer(string Text, bool IsLogbookDraft = false, string?
 
 /// <summary>
 /// Deterministic fallback for Ask Hangar. Streams word-sized tokens at a realistic 25–40 ms cadence
-/// so the stage beat looks identical whether or not Phi Silica is available.
+/// so the stage beat looks identical whether or not an on-device model is available.
 /// </summary>
 public static partial class ScriptedResponder
 {

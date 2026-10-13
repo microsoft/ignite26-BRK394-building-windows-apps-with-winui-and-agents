@@ -23,3 +23,6 @@ out/
 bench/tmp/
 bench/run-log.txt
 *.log
+
+# Aion Instruct preview SDK feed (developer validation only; never commit)
+nuget-local/

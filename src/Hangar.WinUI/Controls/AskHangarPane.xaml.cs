@@ -21,7 +21,7 @@ using DispatcherQueuePriority = Microsoft.UI.Dispatching.DispatcherQueuePriority
 namespace Hangar.Controls;
 
 /// <summary>
-/// On-device assistant pane. Streams Phi Silica answers (or deterministic scripted
+/// On-device assistant pane. Streams Aion Instruct / Phi Silica answers (or deterministic scripted
 /// answers in fallback) and turns citations into action chips.
 /// </summary>
 public sealed partial class AskHangarPane : UserControl
@@ -133,9 +133,7 @@ public sealed partial class AskHangarPane : UserControl
         ModePill.BorderBrush = fg;
         ModeDot.Fill = fg;
         ModeLabel.Foreground = fg;
-        FooterText.Text = live
-            ? "Phi Silica on this PC's NPU · nothing leaves the device"
-            : "Scripted demo answers · grounded in this app's data";
+        FooterText.Text = svc.FooterText;
     }
 
     private void RefreshSuggestions()
@@ -273,12 +271,29 @@ public sealed partial class AskHangarPane : UserControl
 
         try
         {
+            // A question asked while the NPU is still warming up waits briefly (shimmer stays up)
+            // instead of silently dropping to scripted answers.
+            if (svc.IsInitializing && !svc.ForceScripted && intent != AskIntent.Logbook)
+            {
+                row.SetThinkingText("Warming up the NPU…");
+                await svc.WaitForInitializationAsync(TimeSpan.FromSeconds(25), ct);
+                if (ct.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                row.SetThinkingText(svc.IsLive ? "Thinking on NPU…" : "Thinking…");
+            }
+
             // Logbook entries are a regulated record: always a deterministic template, never free model prose.
             if (svc.IsLive && !svc.ForceScripted && intent != AskIntent.Logbook)
             {
                 usedLive = true;
-                var prompt = AskContextBuilder.BuildPrompt(question, page);
-                var reason = await svc.StreamAsync(prompt, OnToken, ct);
+                var reason = await svc.StreamAsync(
+                    AskContextBuilder.BuildSystemPrompt(page),
+                    AskContextBuilder.BuildUserPrompt(question, page),
+                    OnToken,
+                    ct);
                 if (ct.IsCancellationRequested)
                 {
                     return;
@@ -408,6 +423,7 @@ public sealed partial class AskHangarPane : UserControl
         private readonly Run _caret;
         private readonly Microsoft.UI.Dispatching.DispatcherQueueTimer _caretTimer;
         private StackPanel? _thinking;
+        private TextBlock? _thinkingText;
         private Storyboard? _shimmer;
 
         public AnswerRow(AskHangarPane owner)
@@ -444,18 +460,28 @@ public sealed partial class AskHangarPane : UserControl
 
         public Grid Root { get; }
 
+        public void SetThinkingText(string text)
+        {
+            if (_thinkingText is not null && _thinking is not null)
+            {
+                _thinkingText.Text = text;
+                AutomationProperties.SetName(_thinking, text.TrimEnd('…'));
+            }
+        }
+
         private void BuildThinking()
         {
             _thinking = new StackPanel { Spacing = 8 };
             AutomationProperties.SetName(_thinking, "Thinking on NPU");
             AutomationProperties.SetLiveSetting(_thinking, AutomationLiveSetting.Polite);
-            _thinking.Children.Add(new TextBlock
+            _thinkingText = new TextBlock
             {
                 Style = _owner.GetStyle("AskThinkingTextStyle"),
                 Text = LocalModelService.Instance.IsLive && !LocalModelService.Instance.ForceScripted
                     ? "Thinking on NPU…"
                     : "Thinking…",
-            });
+            };
+            _thinking.Children.Add(_thinkingText);
 
             _shimmer = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
             var widths = new[] { 1.0, 0.82, 0.58 };
