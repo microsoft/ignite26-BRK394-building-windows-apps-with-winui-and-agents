@@ -433,9 +433,12 @@
         <!--  Fleet globe: one full-bleed render surface that animates between the card slot and the stage  -->
         <controls:FleetGlobe x:Name="Globe" ExpandProgressChanged="OnGlobeExpandProgressChanged" />
 
-        <!--  Input layer for the expanded globe (drag to spin, wheel to zoom); hit-testable only while expanded  -->
+        <!--  Input layer for the expanded globe (drag to spin, wheel to zoom); hit-testable only while expanded.
+              Sized to the expanded globe slot in code so the bottom dock and side cards stay interactive.  -->
         <Border
             x:Name="GlobeInput"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
             Background="Transparent"
             IsHitTestVisible="False"
             PointerCanceled="OnGlobePointerReleased"

@@ -375,6 +375,9 @@ public sealed partial class AircraftPage : Page
             _compactSlot = compact;
             _expandedSlot = expanded;
             Globe.SetSlots(compact, expanded);
+            GlobeInput.Margin = new Thickness(expanded.X, expanded.Y, 0, 0);
+            GlobeInput.Width = expanded.Width;
+            GlobeInput.Height = expanded.Height;
             UpdateHailCallout();
         }
     }
