@@ -16,7 +16,7 @@ In under three minutes on stage, we follow Maya from *alert → diagnosis → in
 | Beat | What Maya does | WinUI hero |
 |---|---|---|
 | **1. The Fleet** | Opens Hangar. 42 aircraft, one is pulsing amber. | **Chart** (area + line), Mica, connected animation |
-| **2. The Aircraft** | Taps CA 2207. The A321neo spins up in 3D; Engine 2 glows. She pulls it apart into an exploded view. | **Composition 3D** (SceneVisual + glTF), implicit animations |
+| **2. The Aircraft** | Taps CA 2207. The A321neo spins up in 3D; Engine 2 glows. She pulls it apart into an expanded view. | **Composition 3D** (SceneVisual + glTF), implicit animations |
 | **3. The Evidence** | Engine 2's vibration trend overlays the fleet average — the spike is obvious. She scrubs the timeline. | **Chart** (line, markers, annotations) |
 | **4. The Paper Trail** | 2,400 historic work orders. She groups by component, filters "fan blade", sorts by date — finds the same fault 11 months ago. | **TableView** (group / filter / sort / edit) |
 | **5. The Inspection** | Borescope photo of blade 14. She circles a nick with the pen, writes "0.4mm – within limits", measures it. | **InkCanvas + InkToolbar**, Surface Pen |
@@ -69,7 +69,7 @@ Light theme is fully supported ("Day Shift": soft grey Mica, same accents tuned 
 
 ### 3.2 Aircraft — CA 2207 (the "wow" page)
 - **Center:** the A321neo in 3D on a subtle reflective floor with soft ambient occlusion. Drag to orbit, pinch to zoom, pen to point.
-- **"Explode" toggle:** Engine 2 separates into nacelle → fan → compressor → turbine, each part a selectable node. Selecting a part highlights it in cyan and filters everything else in the app to it.
+- **"Explore" toggle:** Engine 2 separates into nacelle → fan → compressor → turbine, each part a selectable node. Selecting a part highlights it in cyan and filters everything else in the app to it.
 - **Left glass panel:** aircraft vitals (cycles, hours, next check).
 - **Right glass panel:** live **Chart** — Engine 2 vibration (N1) over the last 50 flights with fleet-average band, threshold line, and the spike marked in amber.
 - **Bottom timeline scrubber:** scrubbing rewinds the vibration chart and the 3D engine's heat overlay together.
@@ -96,7 +96,7 @@ Light theme is fully supported ("Day Shift": soft grey Mica, same accents tuned 
 |---|---|---|
 | 0:00 | Fleet dashboard, one amber tile breathing | *"It's 2:40am. One of 42 aircraft just landed with a problem — and it leaves at 6:15."* |
 | 0:20 | Tap tile → connected animation → 3D aircraft | *"This is WinUI. Native composition, real 3D, on a Surface."* |
-| 0:45 | Orbit, tap Engine 2, **Explode** | *"Let's look inside the engine."* (applause beat) |
+| 0:45 | Orbit, tap Engine 2, **Explore** | *"Let's look inside the engine."* (applause beat) |
 | 1:05 | Vibration chart, scrub timeline | *"The new WinUI Chart control — line, area, markers, all first-party."* |
 | 1:25 | Work Orders: group, filter, sort to find last year's fault | *"And yes — WinUI has a TableView now. 2,400 rows, grouped, filtered, editable."* (biggest applause beat for devs) |
 | 1:55 | Inspection: pen circles nick, ruler measures, handwrites note | *"Ink is back in WinUI 3. The pen is still the best tool in the hangar."* |
@@ -114,7 +114,7 @@ Light theme is fully supported ("Day Shift": soft grey Mica, same accents tuned 
 | TableView | Grouping, sort, filter, edit+validation, templated cells. Bound to `ObservableCollection` view-models. |
 | Chart | Area (fleet availability, sparklines), Line (vibration vs. band), Bar (hours by component in group headers). |
 | Ink | `InkCanvas` + `InkToolbar` with ruler stencil; strokes serialized (ISF) per inspection; signature capture. |
-| 3D | `Microsoft.UI.Composition` Scenes — `SceneVisual` hosting a glTF model of an A321neo + exploded engine (separate mesh nodes). Spring animations for explode/orbit. Fallback: pre-rendered turntable if Scenes isn't viable — *validate early*. |
+| 3D | `Microsoft.UI.Composition` Scenes — `SceneVisual` hosting a glTF model of an A321neo + expanded engine (separate mesh nodes). Spring animations for expand/orbit. Fallback: pre-rendered turntable if Scenes isn't viable — *validate early*. |
 | Shell | Mica Alt backdrop, extended title bar, NavigationView LeftCompact, connected animations, Light/Dark/HC theme dictionaries. |
 | Stage mode | Hidden `Ctrl+Shift+D` "demo reset" that restores the 02:40 state; deterministic data; 2560×1600 at 150% tuned layout. |
 
@@ -149,7 +149,7 @@ Maya can't send engine data to the cloud, and the hangar Wi-Fi drops out anyway.
 
 - **Open it:** a ✦ button next to search in the title bar, or **Ctrl+Space**. A 420px acrylic pane slides in from the right. Its header badge reads *On-device · Phi Silica · NPU*. Typing a question in the global search box also offers "Ask Hangar: …".
 - **Grounding:** Each prompt carries a compact context block built from app data: the current page, the selected part, the vibration series summary, the flight 44 crew report, open WOs for Engine 2, and the AMM references. Answers stream token by token.
-- **Citation chips are actions:** `Flight 44` scrubs and spins the globe, `Fan blade 14` explodes the engine and selects it, and `WO 2207-011` opens Work Orders filtered to it.
+- **Citation chips are actions:** `Flight 44` scrubs and spins the globe, `Fan blade 14` expands the engine and selects it, and `WO 2207-011` opens Work Orders filtered to it.
 - **Three scripted moments, with page-aware suggestion chips so it always works on stage:**
   1. **Aircraft:** *"Why is 2207 held, and what changed?"* The answer names the flight 44 hail, the climb from 0.9 to 2.31 ips, likely fan FOD or hail damage, and the AMM 72-00 borescope requirement. It shows chips for Flight 44, Fan blade 14, and Borescope.
   2. **Work Orders:** *"Have we seen this before?"* The answer summarises the related fan-blade WOs, including last year's same fault on CA 1916, with chips that filter the TableView.
@@ -164,7 +164,7 @@ Maya can't send engine data to the cloud, and the hangar Wi-Fi drops out anyway.
 |---|---|
 | 1:05 | Vibration chart + scrub → globe arc turns red on flight 44 (DEN → SEA hail) |
 | 1:20 | Expand the globe: 42 aircraft live, then dive back into Engine 2 |
-| 1:35 | Airplane mode → **Ask Hangar** "why is 2207 held?" → chip explodes fan blade 14 |
+| 1:35 | Airplane mode → **Ask Hangar** "why is 2207 held?" → chip expands Engine 2 to fan blade 14 |
 | 2:45 | Inspections: "Draft the logbook entry" → Phi Silica writes it → Maya signs |
 
 ### 7.3 Aion Instruct instead of Phi Silica (v3, in progress)

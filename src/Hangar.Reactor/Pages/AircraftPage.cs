@@ -222,8 +222,8 @@ public sealed class AircraftPage : HangarComponent<PageProps>
             EnginePart.Fan => ("Fan · stage 1 blade 14", "Leading-edge nick suspected — the likely source of the N1 vibration spike. Borescope inspection required before 06:15."),
             EnginePart.Compressor => ("High-pressure compressor", "Borescope history clean. Trend within the fleet band for the last 50 flights."),
             EnginePart.Turbine => ("HP turbine", "EGT margin 42 °C. Blade coating within limits at the last shop visit."),
-            _ when exploded => ("Engine 2 · exploded", "50+ LEAP-1A parts across four modules. Tap a chip to isolate the nacelle, fan, compressor or turbine; tap empty space or press Esc to collapse."),
-            _ => ("Tap the engine to explode it", "Tap Engine 2 or press Explode to separate 50+ LEAP-1A parts; tap a chip to isolate the nacelle, fan, compressor or turbine. Esc collapses."),
+            _ when exploded => ("Engine 2 · expanded", "50+ LEAP-1A parts across four modules. Tap a chip to isolate the nacelle, fan, compressor or turbine; tap empty space or press Esc to collapse."),
+            _ => ("Tap the engine to explore it", "Tap Engine 2 or press Explore to separate 50+ LEAP-1A parts; tap a chip to isolate the nacelle, fan, compressor or turbine. Esc collapses."),
         };
         var showBorescope = part == EnginePart.Fan && !healthy;
 
@@ -272,12 +272,12 @@ public sealed class AircraftPage : HangarComponent<PageProps>
         Element DockDivider() => Border(null).Width(1).Margin(0, 4).Background(B("GlassStrokeBrush"));
 
         var dock = Border(HStack(16,
-                Chip(IconLabel("\uF156", "Explode", 14, true), exploded, () =>
+                Chip(IconLabel("\uF156", "Explore", 14, true), exploded, () =>
                     {
                         if (engine.IsExploded) engine.CollapseEngine();
                         else engine.ExplodeEngine();
                     })
-                    .Padding(16, 8).AutomationId("ExplodeToggle").AutomationName(exploded ? "Collapse engine" : "Explode engine"),
+                    .Padding(16, 8).AutomationId("ExplodeToggle").AutomationName(exploded ? "Collapse engine" : "Explore engine"),
                 HStack(6,
                     PartChip(EnginePart.Nacelle, "Nacelle"),
                     PartChip(EnginePart.Fan, "Fan"),

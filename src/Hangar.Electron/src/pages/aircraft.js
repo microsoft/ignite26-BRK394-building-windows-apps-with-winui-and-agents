@@ -53,8 +53,8 @@
     Compressor: ['High-pressure compressor', 'Borescope history clean. Trend within the fleet band for the last 50 flights.'],
     Turbine: ['HP turbine', 'EGT margin 42 °C. Blade coating within limits at the last shop visit.'],
   };
-  const EXPLODED = ['Engine 2 · exploded', '50+ LEAP-1A parts across four modules. Tap a chip to isolate the nacelle, fan, compressor or turbine; tap empty space or press Esc to collapse.'];
-  const DEFAULT = ['Tap the engine to explode it', 'Tap Engine 2 or press Explode to separate 50+ LEAP-1A parts; tap a chip to isolate the nacelle, fan, compressor or turbine. Esc collapses.'];
+  const EXPLODED = ['Engine 2 · expanded', '50+ LEAP-1A parts across four modules. Tap a chip to isolate the nacelle, fan, compressor or turbine; tap empty space or press Esc to collapse.'];
+  const DEFAULT = ['Tap the engine to explore it', 'Tap Engine 2 or press Explore to separate 50+ LEAP-1A parts; tap a chip to isolate the nacelle, fan, compressor or turbine. Esc collapses.'];
 
   function ensureCss() {
     if (!document.getElementById('aircraft-css')) document.head.appendChild(h('style#aircraft-css', { text: CSS }));
@@ -126,8 +126,8 @@
 
     // Dock
     const explodeChip = h('button.chip#ExplodeChip', {
-      tip: 'Explode Engine 2', onClick: () => holo.setExploded(!holo.isExploded),
-    }, icon('F156'), 'Explode');
+      tip: 'Explore Engine 2', onClick: () => holo.setExploded(!holo.isExploded),
+    }, icon('F156'), 'Explore');
     const partChips = {};
     Object.keys(PART_LABEL).forEach(p => {
       partChips[p] = h(`button.chip#PartChip_${p}`, {

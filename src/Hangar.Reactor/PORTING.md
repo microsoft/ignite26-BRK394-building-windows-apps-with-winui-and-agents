@@ -21,7 +21,7 @@ The Reactor project links these files from `..\Hangar.WinUI` (see `Hangar.Reacto
 | `App.cs` | Window and titlebar, built-in `NavigationView` icon rail (styled with the XAML app's `Themes\NavigationView.xaml`), built-in `AutoSuggestBox` global search, page routing, Ctrl+Shift+L/D shortcuts, demo-reset InfoBar |
 | `Kit.cs`, `Palette.cs` | Small design-system helpers: cards, chips, captions, mono text, theme brushes |
 | `Charts.cs` | Sparklines and the 30-day availability chart, drawn with Win2D |
-| `Hologram\HologramEngine.cs` | The wireframe aircraft and engine hologram (projection, explode, hit-testing), drawn with Win2D |
+| `Hologram\HologramEngine.cs` | The wireframe aircraft and engine hologram (projection, expand, hit-testing), drawn with Win2D |
 | `Pages\FleetPage.cs` | Hero, KPI cards, availability chart, fleet grid |
 | `Pages\AircraftPage.cs` | Hologram stage, vitals, vibration chart, part chips, flight scrubber |
 | `Pages\WorkOrdersPage.cs` | Grouped, sortable and filterable 2,400-row built-in `DataGrid<T>` with inline hours editing and a detail strip |
@@ -39,7 +39,7 @@ The on-device chat pane is the one exception to "no XAML". The project links `Co
 - **Aion:** `Hangar.Reactor.csproj` auto-enables Aion when the nupkg is in the repo's git-ignored `nuget-local\`, exactly like the WinUI project. It injects the framework and WAR 2 dependencies into a manifest copy under `obj\`, so the committed `Package.appxmanifest` stays clean. Run `scripts\Setup-Aion.ps1` once per machine.
 - **Chips → Reactor navigation:**
   - Flight 44 opens Aircraft with `AircraftNavigationArgs.Flight = 44`.
-  - Fan blade 14 opens Aircraft with Engine 2 exploded and the blade selected.
+  - Fan blade 14 opens Aircraft with Engine 2 expanded and the blade selected.
   - `wo:` opens Work Orders with `WorkOrdersNavigationArgs(Query)`.
   - Borescope opens Inspections.
 - **Use in sign-off:** fills the Inspections RELEASE ENTRY box through `NotesPrefill`. It never signs; the caption reads "AI drafted · Engineer signs".

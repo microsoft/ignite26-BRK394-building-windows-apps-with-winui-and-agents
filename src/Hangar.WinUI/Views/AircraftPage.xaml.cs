@@ -270,8 +270,8 @@ public sealed partial class AircraftPage : Page
             EnginePart.Fan => ("Fan · stage 1 blade 14", "Leading-edge nick suspected — the likely source of the N1 vibration spike. Borescope inspection required before 06:15."),
             EnginePart.Compressor => ("High-pressure compressor", "Borescope history clean. Trend within the fleet band for the last 50 flights."),
             EnginePart.Turbine => ("HP turbine", "EGT margin 42 °C. Blade coating within limits at the last shop visit."),
-            _ when Stage.IsExploded => ("Engine 2 · exploded", "50+ LEAP-1A parts across four modules. Tap a chip to isolate the nacelle, fan, compressor or turbine; tap empty space or press Esc to collapse."),
-            _ => ("Tap the engine to explode it", "Tap Engine 2 or press Explode to separate 50+ LEAP-1A parts; tap a chip to isolate the nacelle, fan, compressor or turbine. Esc collapses."),
+            _ when Stage.IsExploded => ("Engine 2 · expanded", "50+ LEAP-1A parts across four modules. Tap a chip to isolate the nacelle, fan, compressor or turbine; tap empty space or press Esc to collapse."),
+            _ => ("Tap the engine to explore it", "Tap Engine 2 or press Explore to separate 50+ LEAP-1A parts; tap a chip to isolate the nacelle, fan, compressor or turbine. Esc collapses."),
         };
 
         PartTitle.Text = title;

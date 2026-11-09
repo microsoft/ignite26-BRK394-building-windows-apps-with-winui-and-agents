@@ -339,7 +339,7 @@
                             x:Name="PartBody"
                             Foreground="{ThemeResource SecondaryTextBrush}"
                             Style="{StaticResource BodyTextStyle}"
-                            Text="Explode Engine 2 to separate the nacelle, fan, compressor and turbine."
+                            Text="Explore Engine 2 to separate the nacelle, fan, compressor and turbine."
                             TextWrapping="WrapWholeWords" />
                         <Button
                             x:Name="BorescopeButton"
@@ -373,14 +373,14 @@
                     <ToggleButton
                         x:Name="ExplodeToggle"
                         AutomationProperties.AutomationId="ExplodeToggle"
-                        AutomationProperties.Name="Explode Engine 2"
+                        AutomationProperties.Name="Explore Engine 2"
                         Checked="OnExplodeToggled"
                         CornerRadius="{StaticResource PillCornerRadius}"
                         Padding="16,8"
                         Unchecked="OnExplodeToggled">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="14" Glyph="&#xF156;" />
-                            <TextBlock FontWeight="SemiBold" Text="Explode" />
+                            <TextBlock FontWeight="SemiBold" Text="Explore" />
                         </StackPanel>
                         <ToggleButton.KeyboardAccelerators>
                             <KeyboardAccelerator Key="E" Modifiers="Control" />
